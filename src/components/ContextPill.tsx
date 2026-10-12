@@ -1,4 +1,4 @@
-import { Text, useDatumTheme, withAlpha } from '@datum-cloud/datum-ui-native';
+import { Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
@@ -36,7 +36,6 @@ export function ContextPill() {
         <GlassView
           isInteractive
           glassEffectStyle="regular"
-          tintColor={withAlpha(t.palette.auroraMoss, 0.08)}
           style={styles.pill}>
           {body}
         </GlassView>
