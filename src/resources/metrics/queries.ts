@@ -107,9 +107,9 @@ function statusOf(queries: MetricQuery[]): MetricsStatus {
   };
 }
 
-/** Unix-second start of the window the newest data was fetched for (charts pin it to their left edge). */
-export function windowStartOf(updatedAt: number, durationMs: number): number {
-  return Math.floor((updatedAt - durationMs) / 1000);
+/** Unix-second end of the window the newest data was fetched for (charts pin it to their right edge). */
+export function windowEndOf(updatedAt: number): number {
+  return Math.floor(updatedAt / 1000);
 }
 
 // ── Load balancer ────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ export function useAlbMetrics(projectId: string | undefined, proxyId: string | u
     };
   }, [rps.data, errorRate.data, p95.data, percentiles.data, total.data, byClass.data, waf.data, regions.data, durationMs]);
 
-  return { data, step, windowStart: windowStartOf(status.updatedAt, durationMs), ...status };
+  return { data, step, windowEnd: windowEndOf(status.updatedAt), ...status };
 }
 
 // ── Compute ──────────────────────────────────────────────────────────────
@@ -246,5 +246,5 @@ export function useComputeMetrics(
       memory: { points: memoryPoints, current: lastValue(memoryPoints) },
     };
   }, [cpu.data, memory.data]);
-  return { data, step, windowStart: windowStartOf(status.updatedAt, durationMs), ...status };
+  return { data, step, windowEnd: windowEndOf(status.updatedAt), ...status };
 }

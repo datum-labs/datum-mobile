@@ -69,7 +69,7 @@ export default function AlbMetrics() {
           <ErrorState error={error} onRetry={() => void metrics.refetch()} />
         ) : (
           <>
-            <Text size="xs" tone="muted" style={{ paddingHorizontal: 4 }} numberOfLines={1}>
+            <Text size="xs" tone="muted" style={{ paddingHorizontal: 4 }} numberOfLines={2}>
               {[proxy.data?.displayName, rangeLabel].filter(Boolean).join(' · ')}
             </Text>
 
@@ -78,7 +78,7 @@ export default function AlbMetrics() {
                 label="Requests/s"
                 value={fmtOr(data.rps.current, formatRps)}
                 points={data.rps.points}
-                start={metrics.windowStart}
+                end={metrics.windowEnd}
                 color={t.colors.primary}
                 loading={loading}
               />
@@ -86,7 +86,7 @@ export default function AlbMetrics() {
                 label="Error rate"
                 value={fmtOr(data.errorRate.current, formatPercent)}
                 points={data.errorRate.points}
-                start={metrics.windowStart}
+                end={metrics.windowEnd}
                 color={t.colors.destructive}
                 loading={loading}
               />
@@ -94,7 +94,7 @@ export default function AlbMetrics() {
                 label="p95 latency"
                 value={fmtOr(data.percentiles.p95, formatMs)}
                 points={data.p95.points}
-                start={metrics.windowStart}
+                end={metrics.windowEnd}
                 color={t.colors.primary}
                 loading={loading}
               />
@@ -144,7 +144,7 @@ export default function AlbMetrics() {
                   {data.p95.points.length > 0 ? (
                     <TimeSeriesChart
                       points={data.p95.points}
-                      start={metrics.windowStart}
+                      end={metrics.windowEnd}
                       color={t.colors.primary}
                       height={150}
                       type="line"

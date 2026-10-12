@@ -102,11 +102,11 @@ export function KpiTile({
   color,
   loading,
   footnote,
-  start,
+  end,
 }: {
   label: string;
-  /** Window start (unix seconds), so sparklines line up with each other. */
-  start?: number;
+  /** Window end (unix seconds), so sparklines line up with each other. */
+  end?: number;
   /** Muted line in place of a sparkline. */
   footnote?: string;
   /** Formatted; undefined reads as "—". */
@@ -132,7 +132,7 @@ export function KpiTile({
               {footnote}
             </Text>
           ) : points && points.length > 1 ? (
-            <TimeSeriesChart points={points} start={start ?? points[0].t} color={color} height={SPARK_HEIGHT} />
+            <TimeSeriesChart points={points} end={end ?? points[points.length - 1].t} color={color} height={SPARK_HEIGHT} />
           ) : points ? (
             <View style={[styles.baseline, { backgroundColor: t.colors.border }]} />
           ) : null}
@@ -153,11 +153,12 @@ const SPARK_HEIGHT = 34;
  * series against the right edge, and clock-time category labels collide
  * (VictoriaMetrics doesn't always align samples to the step, so the first
  * and last hourly samples of a day can share "18:13"). Points are plotted as
- * seconds since the window start instead, which puts the window start on the
- * left edge, and the time labels are drawn underneath in React Native.
+ * seconds before the window end instead: zero pins the window end (now) to
+ * the right edge, so a series that stopped reporting shows the gap. The time
+ * labels are drawn underneath in React Native.
  */
-function toChartData(points: readonly MetricPoint[], start: number): ChartDataPoint[] {
-  return points.map((p) => ({ x: p.t - start, y: p.v }));
+function toChartData(points: readonly MetricPoint[], end: number): ChartDataPoint[] {
+  return points.map((p) => ({ x: p.t - end, y: p.v }));
 }
 
 /** "18:05", or "Mon 18:05" when the window spans days. */
@@ -169,28 +170,29 @@ export function axisTimeLabel(t: number, spanSeconds: number): string {
 
 /**
  * One series over time in Swift Charts, as an area with a line on top (or a
- * line alone). `start` (unix seconds) is the window start, pinned to the left
- * edge. With `timeAxis`, start, middle and last-sample times sit underneath.
+ * line alone). `end` (unix seconds) is the window end, pinned to the right
+ * edge; the left edge is the first sample. With `timeAxis`, the first,
+ * middle and end times sit underneath.
  */
 export function TimeSeriesChart({
   points,
-  start,
+  end,
   color,
   height,
   type = 'area',
   timeAxis = false,
 }: {
   points: readonly MetricPoint[];
-  start: number;
+  end: number;
   color: string;
   height: number;
   type?: 'area' | 'line';
   timeAxis?: boolean;
 }) {
   const t = useDatumTheme();
-  const data = toChartData(points, start);
-  const end = points[points.length - 1]?.t ?? start;
-  const span = end - start;
+  const data = toChartData(points, end);
+  const first = points[0]?.t ?? end;
+  const span = end - first;
   return (
     <View style={{ gap: 6, alignSelf: 'stretch' }}>
       <Host style={{ height, alignSelf: 'stretch' }} pointerEvents="none">
@@ -209,7 +211,7 @@ export function TimeSeriesChart({
       </Host>
       {timeAxis ? (
         <View style={[styles.timeAxis, { borderTopColor: t.colors.border }]}>
-          {[start, start + span / 2, end].map((time, i) => (
+          {[first, first + span / 2, end].map((time, i) => (
             <Text
               key={i}
               size="2xs"
