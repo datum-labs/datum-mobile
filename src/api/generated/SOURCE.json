@@ -1,0 +1,13 @@
+{
+  "repository": "datum-cloud/cloud-portal",
+  "commit": "a7010d0e141ea23341bf1da03863eb1f3400ad9d",
+  "dirty": false,
+  "groups": [
+    "compute",
+    "networking",
+    "networking-alpha1",
+    "dns-networking",
+    "resource-manager"
+  ],
+  "syncedAt": "2026-10-12T16:32:26.915Z"
+}
