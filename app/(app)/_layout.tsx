@@ -1,0 +1,38 @@
+import { useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
+
+/**
+ * System UITabBar (Liquid Glass on iOS 26). Each tab hosts its own native
+ * stack so titles, pushes and the zoom transition stay per-tab.
+ */
+export default function AppTabs() {
+  const t = useDatumTheme();
+  const tint = t.scheme === 'dark' ? t.colors.primary : t.palette.midnightFjord;
+  return (
+    <NativeTabs
+      tintColor={tint}
+      minimizeBehavior="onScrollDown"
+      labelStyle={{ fontFamily: t.fonts.sans.medium }}>
+      <NativeTabs.Trigger name="home">
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="edge">
+        <NativeTabs.Trigger.Label>Edge</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="globe.americas.fill" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="compute">
+        <NativeTabs.Trigger.Label>Compute</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="cpu" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="network">
+        <NativeTabs.Trigger.Label>Network</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="point.3.filled.connected.trianglepath.dotted" />
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="account">
+        <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
+      </NativeTabs.Trigger>
+    </NativeTabs>
+  );
+}
