@@ -161,4 +161,19 @@ describe('api client', () => {
       message: 'logql: unclosed stream selector',
     });
   });
+
+  test('PUT sends JSON and DELETE tolerates an empty body', async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(200, { spec: { renewTime: 't' } }))
+      .mockResolvedValueOnce({ ok: true, status: 204, text: async () => '' } as unknown as Response);
+    const client = createApiClient({ baseUrl: BASE, tokens: tokens(), fetchImpl });
+    await expect(client.put('/apis/lease', { spec: { renewTime: 't' } })).resolves.toEqual({ spec: { renewTime: 't' } });
+    await expect(client.del('/apis/binding', { kind: 'DeleteOptions' })).resolves.toBeUndefined();
+    const [, put] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    const [, del] = fetchImpl.mock.calls[1] as [string, RequestInit];
+    expect(put).toMatchObject({ method: 'PUT', body: '{"spec":{"renewTime":"t"}}' });
+    expect((put.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    expect(del).toMatchObject({ method: 'DELETE', body: '{"kind":"DeleteOptions"}' });
+  });
 });

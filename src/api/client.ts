@@ -23,7 +23,7 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
-type Method = 'GET' | 'POST';
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export interface K8sList<T> {
   items?: T[];
@@ -108,7 +108,9 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
       const { message, reason } = parseK8sStatus(body, res.status);
       throw new ApiError(res.status, message, path, reason);
     }
-    return (await res.json()) as T;
+    if (res.status === 204) return undefined as T;
+    const text = await res.text();
+    return (text ? JSON.parse(text) : undefined) as T;
   }
 
   function get<T>(path: string, options: RequestOptions = {}): Promise<T> {
@@ -116,11 +118,21 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
   }
 
   /**
-   * POST a review-style object (SelfSubjectAccessReview). The app never
-   * mutates resources; reviews are create-only and side-effect free.
+   * POST: review-style objects (SelfSubjectAccessReview) and, for Connect,
+   * creating this device's own Connector, gateway and binding.
    */
   function post<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
     return request<T>('POST', path, { ...options, body });
+  }
+
+  /** PUT a full object (Connect: the Connector's Lease renewal). */
+  function put<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+    return request<T>('PUT', path, { ...options, body });
+  }
+
+  /** DELETE, optionally with DeleteOptions (preconditions). */
+  async function del(path: string, body?: unknown, options: RequestOptions = {}): Promise<void> {
+    await request<unknown>('DELETE', path, { ...options, body });
   }
 
   /** GET a single object. */
@@ -149,7 +161,7 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
     return items;
   }
 
-  return { get, post, getResource, listResource };
+  return { get, post, put, del, getResource, listResource };
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
