@@ -181,8 +181,15 @@ export default function AlbDetail() {
               ) : null}
             </DetailHeader>
 
-            <Section title="Logs">
+            <Section title="Observability">
               <ResourceRow
+                icon="chart.xyaxis.line"
+                title="Metrics"
+                subtitle="Traffic, errors and latency"
+                href={`/alb/${encodeURIComponent(proxy.name)}/metrics`}
+              />
+              <ResourceRow
+                index={1}
                 icon="doc.text.magnifyingglass"
                 title="Access logs"
                 subtitle="Requests through this load balancer"

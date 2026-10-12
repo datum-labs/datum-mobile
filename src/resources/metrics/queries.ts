@@ -107,6 +107,11 @@ function statusOf(queries: MetricQuery[]): MetricsStatus {
   };
 }
 
+/** Unix-second start of the window the newest data was fetched for (charts pin it to their left edge). */
+export function windowStartOf(updatedAt: number, durationMs: number): number {
+  return Math.floor((updatedAt - durationMs) / 1000);
+}
+
 // ── Load balancer ────────────────────────────────────────────────────────
 
 export const STATUS_CLASSES = ['2XX', '3XX', '4XX', '5XX'] as const;
@@ -208,7 +213,7 @@ export function useAlbMetrics(projectId: string | undefined, proxyId: string | u
     };
   }, [rps.data, errorRate.data, p95.data, percentiles.data, total.data, byClass.data, waf.data, regions.data, durationMs]);
 
-  return { data, step, ...status };
+  return { data, step, windowStart: windowStartOf(status.updatedAt, durationMs), ...status };
 }
 
 // ── Compute ──────────────────────────────────────────────────────────────
@@ -227,7 +232,8 @@ export function useComputeMetrics(
   range: MetricRangeKey
 ) {
   const interval = useLiveRefetchInterval();
-  const step = computeChartStep(metricRangePreset(range).durationMs);
+  const durationMs = metricRangePreset(range).durationMs;
+  const step = computeChartStep(durationMs);
   const common = { range, step, interval, kind: 'range', enabled: !!queries } as const;
   const cpu = useMetricQuery({ ...common, promql: queries?.cpu });
   const memory = useMetricQuery({ ...common, promql: queries?.memory });
@@ -240,5 +246,5 @@ export function useComputeMetrics(
       memory: { points: memoryPoints, current: lastValue(memoryPoints) },
     };
   }, [cpu.data, memory.data]);
-  return { data, step, ...status };
+  return { data, step, windowStart: windowStartOf(status.updatedAt, durationMs), ...status };
 }
