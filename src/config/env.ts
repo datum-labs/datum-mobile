@@ -16,6 +16,8 @@ export interface AppEnv {
   /** Shared keychain group, set only when the build is entitled to it (see app.config.ts). */
   keychainAccessGroup?: string;
   portalUrl: string;
+  /** Metrics gateway origin; empty where metrics aren't offered (production). */
+  telemetryUrl: string;
   version: string;
 }
 
@@ -42,6 +44,10 @@ export const env: AppEnv = {
   appGroup: extra.appGroup ?? 'group.net.datum.cloud.staging',
   keychainAccessGroup: extra.keychainAccessGroup,
   portalUrl: extra.portalUrl ?? 'https://cloud.staging.env.datum.net',
+  // `??` keeps production's explicit ''. The fallback only covers a staging
+  // dev client still running on an older native config.
+  telemetryUrl:
+    extra.telemetryUrl ?? ((extra.variant ?? 'staging') === 'staging' ? 'https://telemetry.staging.env.datum.net' : ''),
   version: Constants.expoConfig?.version ?? '0.0.0',
 };
 
