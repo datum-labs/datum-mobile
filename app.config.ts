@@ -122,6 +122,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       config: { usesNonExemptEncryption: false },
       infoPlist: {
         CFBundleAllowMixedLocalizations: true,
+        // Only standard HTTPS/TLS: exempt from export compliance, so App Store
+        // Connect doesn't ask on every TestFlight build.
+        ITSAppUsesNonExemptEncryption: false,
       },
     },
     plugins: [
