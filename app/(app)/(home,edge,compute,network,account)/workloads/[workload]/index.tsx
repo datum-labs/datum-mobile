@@ -133,8 +133,19 @@ export default function WorkloadDetail() {
               </Section>
             ) : null}
 
-            <Section title="Logs">
+            <Section title="Observability">
               <ResourceRow
+                icon="chart.xyaxis.line"
+                title="Metrics"
+                subtitle={
+                  instances.data && instances.data.length > 1
+                    ? `CPU and memory across all ${instances.data.length} instances`
+                    : 'CPU and memory'
+                }
+                href={`/workloads/${encodeURIComponent(workload.name)}/metrics`}
+              />
+              <ResourceRow
+                index={1}
                 icon="doc.text.magnifyingglass"
                 title="Logs"
                 subtitle={

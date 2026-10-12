@@ -36,8 +36,15 @@ export default function InstanceDetail() {
               subtitle={instance.image}
               status={instanceView(instance)}
             />
-            <Section title="Logs">
+            <Section title="Observability">
               <ResourceRow
+                icon="chart.xyaxis.line"
+                title="Metrics"
+                subtitle="CPU and memory"
+                href={`/instances/${encodeURIComponent(instance.name)}/metrics`}
+              />
+              <ResourceRow
+                index={1}
                 icon="doc.text.magnifyingglass"
                 title="Logs"
                 subtitle="Console output from this instance"
