@@ -30,7 +30,7 @@ export interface ConnectedAlb {
   displayName: string;
   createdAt?: Date;
   conditions: ResourceCondition[];
-  services: Array<{ name: string; ready?: ResourceCondition }>;
+  services: { name: string; ready?: ResourceCondition }[];
 }
 
 /** The operator's expected windows (`windowControlPlaneRead`, `windowCertificate`). */

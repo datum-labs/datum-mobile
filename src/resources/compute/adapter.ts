@@ -70,7 +70,7 @@ export const INSTANCE_LABELS = {
 
 interface RawWorkloadPlacement {
   name: string;
-  locations?: Array<{ name: string }>;
+  locations?: { name: string }[];
   locationSelector?: RawLabelSelector;
   /** Deprecated: stored before placement moved to locations and not yet rewritten. */
   cityCodes?: string[];
@@ -79,7 +79,7 @@ interface RawWorkloadPlacement {
 
 interface RawWorkloadPlacementStatus {
   name?: string;
-  locations?: Array<{ name: string }>;
+  locations?: { name: string }[];
   conditions?: RawCondition[];
   replicas?: number;
   currentReplicas?: number;
@@ -94,7 +94,7 @@ export interface RawWorkload {
     template?: {
       spec?: {
         runtime?: RawRuntime;
-        networkInterfaces?: Array<{ network?: { name?: string } }>;
+        networkInterfaces?: { network?: { name?: string } }[];
       };
     };
     placements?: RawWorkloadPlacement[];
@@ -230,7 +230,7 @@ function deriveUpdatedAt(
 
 interface RawLabelSelector {
   matchLabels?: Record<string, string>;
-  matchExpressions?: Array<{ key: string; operator: string; values?: string[] }>;
+  matchExpressions?: { key: string; operator: string; values?: string[] }[];
 }
 
 /** Renders a label selector the way kubectl prints it, e.g. "city-code=DFW, region in (a,b)". */
@@ -318,7 +318,7 @@ function toPlacementRegions(
 }
 
 /** Distinct network names across the template's interfaces, in declaration order. */
-function deriveNetworks(interfaces?: Array<{ network?: { name?: string } }>): string[] {
+function deriveNetworks(interfaces?: { network?: { name?: string } }[]): string[] {
   const names = (interfaces ?? []).map((iface) => iface.network?.name).filter(Boolean) as string[];
   return [...new Set(names)];
 }

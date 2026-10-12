@@ -132,7 +132,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ['expo-build-properties', { ios: { deploymentTarget: '26.0' } }],
     ],
     experiments: {
-      typedRoutes: true,
       reactCompiler: true,
     },
     extra: {

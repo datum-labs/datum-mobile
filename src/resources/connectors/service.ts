@@ -11,7 +11,7 @@ export interface Connector extends ResourceMeta {
   deviceOs?: string;
   view: StatusView;
   conditions: Condition[];
-  capabilities: Array<{ type: string; enabled: boolean; view: StatusView }>;
+  capabilities: { type: string; enabled: boolean; view: StatusView }[];
   homeRelay?: string;
   addresses: string[];
   leaseName?: string;

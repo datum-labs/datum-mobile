@@ -151,7 +151,7 @@ type ProxyLike = {
     labels?: Record<string, string>;
     annotations?: Record<string, string>;
   };
-  spec?: { hostnames?: string[]; rules?: Array<{ backends?: Array<{ networkService?: { name?: string } }> }> };
+  spec?: { hostnames?: string[]; rules?: { backends?: { networkService?: { name?: string } }[] }[] };
   status?: { canonicalHostname?: string; conditions?: ResourceCondition[] };
 };
 

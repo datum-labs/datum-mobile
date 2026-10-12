@@ -52,7 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     void (async () => {
       const restored = await session.restore();
-      if (restored.status === 'signedOut' && __DEV__) {
+      // __DEV__ first so Metro folds the whole branch away in release builds.
+      if (__DEV__ && restored.status === 'signedOut') {
         const token = devTokenFromEnv();
         if (token) {
           try {

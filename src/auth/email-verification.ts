@@ -13,7 +13,7 @@ export const EMAIL_NOT_VERIFIED_CAUSE = 'EmailNotVerified';
 export function isEmailNotVerifiedDenial(body: string): boolean {
   try {
     const status = JSON.parse(body) as {
-      details?: { causes?: Array<{ type?: string }> };
+      details?: { causes?: { type?: string }[] };
     };
     return (status.details?.causes ?? []).some((c) => c.type === EMAIL_NOT_VERIFIED_CAUSE);
   } catch {

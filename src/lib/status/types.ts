@@ -5,6 +5,7 @@ export const ControlPlaneStatus = {
   Pending: 'pending',
 } as const;
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare -- const + type pair, like an enum
 export type ControlPlaneStatus = (typeof ControlPlaneStatus)[keyof typeof ControlPlaneStatus];
 
 export interface ConditionSummary {
