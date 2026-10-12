@@ -23,11 +23,13 @@ const STATUS_SEGMENTS = [
 type StatusSegment = (typeof STATUS_SEGMENTS)[number]['value'];
 
 export default function AlbAccessLogs() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, status: statusParam } = useLocalSearchParams<{ id: string; status?: string }>();
   const projectId = useProjectId();
   const proxy = useHttpProxy(projectId, id);
   const controls = useLogControls();
-  const [status, setStatus] = useState<StatusSegment>('all');
+  const [status, setStatus] = useState<StatusSegment>(
+    () => STATUS_SEGMENTS.find((s) => s.value === statusParam)?.value ?? 'all'
+  );
   const permission = useLogsPermission(projectId);
   const logs = useAlbLogs(projectId, id, {
     range: controls.range,
