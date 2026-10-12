@@ -154,7 +154,7 @@ export default function AlbDetail() {
 
   return (
     <>
-      <Stack.Screen options={{ title: proxy?.displayName ?? 'Load balancer', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: proxy?.displayName ?? 'Load balancer' }} />
       <Screen onRefresh={() => Promise.all([query.refetch(), waf.refetch()])}>
         {!proxy ? (
           query.error ? (

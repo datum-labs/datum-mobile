@@ -19,7 +19,7 @@ export default function ConnectorDetail() {
   return (
     <>
       <Stack.Screen
-        options={{ title: connector?.deviceName ?? connector?.name ?? 'Connector', headerLargeTitle: false }}
+        options={{ title: connector?.deviceName ?? connector?.name ?? 'Connector' }}
       />
       <Screen onRefresh={() => query.refetch()}>
         {!connector ? (

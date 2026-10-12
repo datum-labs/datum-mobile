@@ -21,7 +21,7 @@ export default function DomainDetail() {
 
   return (
     <>
-      <Stack.Screen options={{ title: domain?.domainName ?? 'Domain', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: domain?.domainName ?? 'Domain' }} />
       <Screen onRefresh={() => query.refetch()}>
         {!domain ? (
           query.error ? (

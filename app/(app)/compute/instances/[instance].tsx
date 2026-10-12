@@ -19,7 +19,7 @@ export default function InstanceDetail() {
 
   return (
     <>
-      <Stack.Screen options={{ title: name ?? 'Instance', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: name ?? 'Instance' }} />
       <Screen onRefresh={() => query.refetch()}>
         {!instance ? (
           query.error ? (

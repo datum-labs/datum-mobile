@@ -20,7 +20,7 @@ export default function NetworkDetail() {
 
   return (
     <>
-      <Stack.Screen options={{ title: network?.displayName ?? 'Network', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: network?.displayName ?? 'Network' }} />
       <Screen onRefresh={() => Promise.all([query.refetch(), subnets.refetch()])}>
         {!network ? (
           query.error ? (

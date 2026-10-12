@@ -10,8 +10,6 @@ type Props = {
   label: string;
   onPress?: () => void;
   icon?: SymbolViewProps['name'];
-  /** `primary` is tinted aurora-moss; `neutral` is clear glass. */
-  tone?: 'primary' | 'neutral';
   loading?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -19,22 +17,20 @@ type Props = {
 };
 
 /**
- * Floating Liquid Glass control (iOS 26 UIGlassEffect via expo-glass-effect).
- * Falls back to a solid fill where glass isn't available.
+ * Floating Liquid Glass control (iOS 26 UIGlassEffect via expo-glass-effect),
+ * deliberately untinted. Falls back to a solid fill where glass isn't available.
  */
 export function GlassButton({
   label,
   onPress,
   icon,
-  tone = 'primary',
   loading,
   disabled,
   style,
   testID,
 }: Props) {
   const t = useDatumTheme();
-  const primary = tone === 'primary';
-  const fg = primary ? t.palette.midnightFjord : t.colors.foreground;
+  const fg = t.colors.foreground;
   const glass = isLiquidGlassAvailable();
   const content = (
     <View style={styles.content}>
@@ -61,16 +57,11 @@ export function GlassButton({
         <GlassView
           glassEffectStyle="regular"
           isInteractive
-          tintColor={primary ? withAlpha(t.palette.auroraMoss, 0.85) : undefined}
           style={styles.pill}>
           {content}
         </GlassView>
       ) : (
-        <View
-          style={[
-            styles.pill,
-            { backgroundColor: primary ? t.palette.auroraMoss : withAlpha(t.colors.card, 0.9) },
-          ]}>
+        <View style={[styles.pill, { backgroundColor: withAlpha(t.colors.card, 0.9) }]}>
           {content}
         </View>
       )}

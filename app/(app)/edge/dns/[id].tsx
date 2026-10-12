@@ -56,7 +56,7 @@ export default function DnsZoneDetail() {
 
   return (
     <>
-      <Stack.Screen options={{ title: zone?.domainName ?? 'DNS zone', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: zone?.domainName ?? 'DNS zone' }} />
       <Screen onRefresh={() => Promise.all([zoneQuery.refetch(), records.refetch()])}>
         {!zone ? (
           zoneQuery.error ? (

@@ -42,7 +42,7 @@ export default function WorkloadDetail() {
 
   return (
     <>
-      <Stack.Screen options={{ title: name ?? 'Workload', headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: name ?? 'Workload' }} />
       <Screen
         onRefresh={() =>
           Promise.all([query.refetch(), deployments.refetch(), instances.refetch(), albs.refetch()])
