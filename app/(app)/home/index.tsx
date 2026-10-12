@@ -211,6 +211,7 @@ export default function Home() {
                     icon={item.icon}
                     status={item.view}
                     href={item.href}
+                    zoom={false}
                   />
                 ))
               ) : allLoaded ? (

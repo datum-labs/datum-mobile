@@ -19,6 +19,8 @@ export interface ResourceRowProps {
   status?: StatusView;
   trailing?: ReactNode;
   href?: Href;
+  /** Zoom into the pushed screen. Turn off for links into another tab, which iOS can't zoom across. */
+  zoom?: boolean;
   /** Position in the list, for the staggered entering animation. */
   index?: number;
   testID?: string;
@@ -66,19 +68,25 @@ function RowBody({ title, subtitle, meta, icon, status, trailing, href }: Resour
  * iOS 18+ zoom transition from this row (Link.AppleZoom).
  */
 export function ResourceRow(props: ResourceRowProps) {
-  const { href, index = 0, testID } = props;
+  const { href, index = 0, testID, zoom = true } = props;
   const entering = FadeInDown.delay(Math.min(index, 12) * 35)
     .duration(320)
     .withInitialValues({ transform: [{ translateY: 10 }] });
   return (
     <Animated.View entering={entering} layout={LinearTransition.duration(220)} testID={testID}>
-      {href ? (
+      {href && zoom ? (
         <Link href={href} asChild>
           <Link.AppleZoom>
             <PressableScale accessibilityRole="button" accessibilityLabel={props.title}>
               <RowBody {...props} />
             </PressableScale>
           </Link.AppleZoom>
+        </Link>
+      ) : href ? (
+        <Link href={href} asChild>
+          <PressableScale accessibilityRole="button" accessibilityLabel={props.title}>
+            <RowBody {...props} />
+          </PressableScale>
         </Link>
       ) : (
         <RowBody {...props} />
