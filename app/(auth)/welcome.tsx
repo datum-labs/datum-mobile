@@ -1,4 +1,4 @@
-import { Alert, LogoFlat, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { LogoFlat, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/AuthProvider';
 import { isDevTokenAllowed } from '@/auth/dev-token';
 import { GlassButton } from '@/components/GlassButton';
-import { Icon } from '@/components/Icon';
+import { Notice } from '@/components/Notice';
 
 const NAVY = '#0c1d31';
 const hero = require('@/assets/images/hero-portrait.jpg');
@@ -47,11 +47,11 @@ export default function Welcome() {
         <Animated.View entering={FadeInDown.delay(120).duration(500)}>
           <LogoFlat height={30} tone="mono-light" />
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(220).duration(500)} style={{ gap: 10 }}>
-          <Title level={1} style={{ color: '#f6f6f5' }}>
+        <Animated.View entering={FadeInDown.delay(220).duration(500)} style={{ gap: 14 }}>
+          <Title level={1} style={styles.headline}>
             Your cloud,{'\n'}within reach.
           </Title>
-          <Text size="base" style={{ color: 'rgba(246,246,245,0.75)', maxWidth: 300 }}>
+          <Text style={styles.lede}>
             Check on load balancers, workloads, networks and DNS across your Datum Cloud projects.
           </Text>
         </Animated.View>
@@ -61,17 +61,19 @@ export default function Welcome() {
         entering={FadeInDown.delay(360).duration(500)}
         style={[styles.bottom, { paddingBottom: insets.bottom + 20 }]}>
         {configError ? (
-          <Alert
-            type="warning"
+          <Notice
+            kind="warning"
+            surface="glass"
+            icon="wrench.and.screwdriver.fill"
             title="Sign-in isn't configured"
             description={configError}
-            icon={<Icon name="wrench.and.screwdriver.fill" size={15} color={t.colors.warning} />}
           />
         ) : null}
         {notice || error ? (
-          <Alert
-            type={error ? 'destructive' : 'info'}
-            title={error ? "Couldn't sign in" : notice}
+          <Notice
+            kind={error ? 'error' : 'info'}
+            surface="glass"
+            title={error ? "Couldn't sign in" : (notice as string)}
             description={error}
           />
         ) : null}
@@ -109,7 +111,11 @@ export default function Welcome() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'space-between' },
-  top: { paddingHorizontal: 28, gap: 28 },
+  top: { paddingHorizontal: 28, gap: 32 },
+  // A display size for the hero line: the package's phone type scale tops out
+  // at 24pt, barely above the 17pt body, which flattened the hierarchy.
+  headline: { color: '#f6f6f5', fontSize: 46, lineHeight: 50, letterSpacing: -0.6 },
+  lede: { color: 'rgba(246,246,245,0.78)', fontSize: 17, lineHeight: 25, maxWidth: 320 },
   bottom: { paddingHorizontal: 24, gap: 14 },
   link: { textAlign: 'center', color: 'rgba(246,246,245,0.8)', paddingVertical: 6 },
 });

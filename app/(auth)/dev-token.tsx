@@ -1,10 +1,11 @@
-import { Alert, Button, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Button, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { useAuth } from '@/auth/AuthProvider';
 import { isDevTokenAllowed } from '@/auth/dev-token';
+import { Notice } from '@/components/Notice';
 
 /**
  * DEV ONLY (staging, __DEV__): paste an access token, e.g. from
@@ -47,7 +48,7 @@ export default function DevToken() {
           { color: t.colors.foreground, borderColor: t.colors.border, fontFamily: t.fonts.mono },
         ]}
       />
-      {error ? <Alert type="destructive" title="Token rejected" description={error} /> : null}
+      {error ? <Notice kind="error" title="Token rejected" description={error} /> : null}
       <Button type="primary" theme="solid" block disabled={!token.trim()} onPress={submit}>
         Use token
       </Button>

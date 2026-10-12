@@ -1,4 +1,4 @@
-import { Alert, Button, Skeleton, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Button, Skeleton, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
@@ -7,7 +7,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { describeError } from '@/api/errors';
 
-import { Icon } from './Icon';
+import { Notice } from './Notice';
 
 /**
  * The one empty-state illustration: the three explorers, cut from the
@@ -43,19 +43,18 @@ export function RowSkeletons({ count = 5 }: { count?: number }) {
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   return (
     <Animated.View entering={FadeIn.duration(200)}>
-      <Alert
-        type="destructive"
+      <Notice
+        kind="error"
         title="Couldn't load this"
         description={describeError(error)}
-        icon={<Icon name="exclamationmark.triangle.fill" size={16} />}
+        action={
+          onRetry ? (
+            <Button type="secondary" theme="outline" size="small" onPress={onRetry}>
+              Try again
+            </Button>
+          ) : undefined
+        }
       />
-      {onRetry ? (
-        <View style={{ marginTop: 12, alignItems: 'flex-start' }}>
-          <Button type="secondary" theme="outline" size="small" onPress={onRetry}>
-            Try again
-          </Button>
-        </View>
-      ) : null}
     </Animated.View>
   );
 }
