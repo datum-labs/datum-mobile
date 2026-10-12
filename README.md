@@ -225,3 +225,10 @@ and App Group are reserved now:
 - **Maestro smoke flow:** not written yet.
 - **Universal links:** the AASA file isn't set up yet.
 - **Watch/SSE updates:** these are deferred, and the app polls instead.
+- **Metrics in production:** ALB, instance and workload metrics query the
+  staging telemetry gateway's VictoriaMetrics directly with the user's token
+  (`src/resources/metrics/source.ts`). That path is staging-only, admits an
+  infra allowlist, and has no per-tenant isolation beyond the project label in
+  the PromQL. Production has no `telemetryUrl`, so it shows "Metrics aren't
+  available" until a tenant-safe metrics API exists; switching is a change to
+  that one file.
