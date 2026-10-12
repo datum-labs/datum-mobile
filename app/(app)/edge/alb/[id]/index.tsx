@@ -3,11 +3,12 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { DetailHeader } from '@/components/DetailHeader';
-import { Icon } from '@/components/Icon';
+import { HostnameLink, openHostname } from '@/components/HostnameLink';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
+import { isOpenableHostname } from '@/lib/hostnames';
 import { ErrorState, RowSkeletons } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { formatDate } from '@/lib/format';
@@ -98,12 +99,7 @@ function HostnameCard({ hostname, proxy }: { hostname: string; proxy: HttpProxy 
   return (
     <Card size="sm">
       <CardContent style={{ gap: 12 }}>
-        <View style={styles.hostHead}>
-          <Icon name="link" size={15} color={t.colors.primary} />
-          <Text size="base" weight="medium" mono selectable style={{ flex: 1 }}>
-            {hostname}
-          </Text>
-        </View>
+        <HostnameLink hostname={hostname} />
         <CheckRow label="Ownership" view={ownershipView(status)} />
         <CheckRow label="Certificate" view={certView(status)} />
         <CheckRow label="DNS" view={dnsView(status)} />
@@ -155,6 +151,15 @@ export default function AlbDetail() {
   return (
     <>
       <Stack.Screen options={{ title: proxy?.displayName ?? 'Load balancer' }} />
+      {proxy?.canonicalHostname && isOpenableHostname(proxy.canonicalHostname) ? (
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button
+            icon="safari"
+            accessibilityLabel={`Open ${proxy.canonicalHostname} in your browser`}
+            onPress={() => void openHostname(proxy.canonicalHostname as string)}
+          />
+        </Stack.Toolbar>
+      ) : null}
       <Screen onRefresh={() => Promise.all([query.refetch(), waf.refetch()])}>
         {!proxy ? (
           query.error ? (
@@ -253,7 +258,12 @@ export default function AlbDetail() {
               <InfoCard
                 rows={[
                   { label: 'Name', value: proxy.name, mono: true },
-                  { label: 'Default hostname', value: proxy.canonicalHostname, mono: true },
+                  {
+                    label: 'Default hostname',
+                    value: proxy.canonicalHostname ? (
+                      <HostnameLink hostname={proxy.canonicalHostname} size="sm" />
+                    ) : undefined,
+                  },
                   { label: 'HTTP → HTTPS', value: proxy.enableHttpRedirect ? 'Redirect' : 'Off' },
                   proxy.workloadName ? { label: 'Workload', value: proxy.workloadName } : null,
                   { label: 'Created', value: formatDate(proxy.createdAt) },
@@ -273,6 +283,5 @@ export default function AlbDetail() {
 
 const styles = StyleSheet.create({
   checkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  hostHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   records: { borderRadius: 10, padding: 10, gap: 4 },
 });
