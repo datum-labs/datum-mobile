@@ -2,7 +2,7 @@ import { Spinner, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-nativ
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import { useAuth } from '@/auth/AuthProvider';
 import { Icon } from '@/components/Icon';
@@ -84,7 +84,10 @@ export default function ContextSwitcher() {
 
       <View collapsable={false}>
         {!org ? (
-          <Animated.View key="orgs" entering={FadeIn.duration(180)} exiting={SlideOutLeft.duration(200)}>
+          // Opacity-only transitions: a transform-based entering animation
+          // (SlideInRight) inside the native form sheet left the project rows'
+          // hit area offset from where they were drawn, so taps did nothing.
+          <Animated.View key="orgs" entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
             {orgs.data ? (
               orgs.data.length === 0 ? (
                 <EmptyState
@@ -110,7 +113,7 @@ export default function ContextSwitcher() {
             )}
           </Animated.View>
         ) : (
-          <Animated.View key={`projects-${org.name}`} entering={SlideInRight.duration(220)} exiting={FadeOut.duration(150)}>
+          <Animated.View key={`projects-${org.name}`} entering={FadeIn.duration(180)} exiting={FadeOut.duration(120)}>
             {projects.data ? (
               projects.data.length === 0 ? (
                 <EmptyState
