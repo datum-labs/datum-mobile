@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
+import { ConnectDeviceSection } from '@/components/ConnectDeviceSection';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { ResourceRow } from '@/components/ResourceRow';
@@ -36,6 +37,9 @@ export default function NetworkDetail() {
               subtitle={network.name !== network.displayName ? network.name : undefined}
               status={network.view}
             />
+            {projectId ? (
+              <ConnectDeviceSection project={projectId} network={network.name} displayName={network.displayName} />
+            ) : null}
             <Section title="Addressing">
               <InfoCard
                 rows={[
