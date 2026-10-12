@@ -186,3 +186,87 @@ export const ACCESS_LOG_FIELD_LABELS: Record<AlbLogLabel, string> = {
   response_flags: 'Response flags',
   request_id: 'Request ID',
 };
+
+/**
+ * Envoy `%RESPONSE_FLAGS%` short codes, worded from Envoy's access-log
+ * reference. The ones that explain a 503 or a status of 0 matter most here.
+ */
+const RESPONSE_FLAGS: Record<string, string> = {
+  DC: 'Downstream connection terminated',
+  DI: 'Request delayed by fault injection',
+  DPE: 'Downstream protocol error',
+  DT: 'Request exceeded max duration',
+  FI: 'Aborted by fault injection',
+  IH: 'Invalid header value rejected',
+  LH: 'Local health check failed',
+  LR: 'Connection reset locally',
+  NC: 'Upstream cluster not found',
+  NFCF: 'No filter config found',
+  NR: 'No route configured',
+  OM: 'Overload manager terminated request',
+  RFCF: 'Route config fetch failed',
+  RL: 'Rate limited locally',
+  RLSE: 'Rate limit service error',
+  SI: 'Stream idle timeout',
+  UAEX: 'Denied by external authorization',
+  UC: 'Upstream connection terminated',
+  UF: 'Upstream connection failure',
+  UH: 'No healthy upstream',
+  UMSDR: 'Upstream max stream duration reached',
+  UO: 'Upstream overflow (circuit breaker)',
+  UPE: 'Upstream protocol error',
+  UR: 'Upstream reset the connection',
+  URX: 'Upstream retry limit exceeded',
+  UT: 'Upstream request timeout',
+};
+
+/** `UF,URX` → `UF · Upstream connection failure`, one per flag. */
+export function describeResponseFlags(raw: string | undefined): string[] {
+  const value = present(raw);
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((flag) => flag.trim())
+    .filter(Boolean)
+    .map((flag) => (RESPONSE_FLAGS[flag] ? `${flag} · ${RESPONSE_FLAGS[flag]}` : flag));
+}
+
+const STATUS_TEXT: Record<number, string> = {
+  0: 'No response',
+  200: 'OK',
+  201: 'Created',
+  202: 'Accepted',
+  204: 'No Content',
+  206: 'Partial Content',
+  301: 'Moved Permanently',
+  302: 'Found',
+  303: 'See Other',
+  304: 'Not Modified',
+  307: 'Temporary Redirect',
+  308: 'Permanent Redirect',
+  400: 'Bad Request',
+  401: 'Unauthorized',
+  403: 'Forbidden',
+  404: 'Not Found',
+  405: 'Method Not Allowed',
+  408: 'Request Timeout',
+  409: 'Conflict',
+  410: 'Gone',
+  413: 'Content Too Large',
+  415: 'Unsupported Media Type',
+  421: 'Misdirected Request',
+  422: 'Unprocessable Content',
+  426: 'Upgrade Required',
+  429: 'Too Many Requests',
+  431: 'Request Header Fields Too Large',
+  499: 'Client Closed Request',
+  500: 'Internal Server Error',
+  501: 'Not Implemented',
+  502: 'Bad Gateway',
+  503: 'Service Unavailable',
+  504: 'Gateway Timeout',
+};
+
+export function httpStatusText(status: number | undefined): string | undefined {
+  return status === undefined ? undefined : STATUS_TEXT[status];
+}

@@ -1,5 +1,7 @@
 import {
   albHostValues,
+  describeResponseFlags,
+  httpStatusText,
   logRequestHost,
   parseDurationMs,
   pickAlbLogLabels,
@@ -126,5 +128,24 @@ describe('splitPathQuery', () => {
     });
     expect(splitPathQuery('/plain')).toEqual({ pathname: '/plain', params: [] });
     expect(splitPathQuery('/bad?x=%E0%A4%A')).toEqual({ pathname: '/bad', params: [['x', '%E0%A4%A']] });
+  });
+});
+
+describe('describeResponseFlags', () => {
+  test('explains each Envoy flag and keeps unknown ones', () => {
+    expect(describeResponseFlags('UF,URX')).toEqual([
+      'UF · Upstream connection failure',
+      'URX · Upstream retry limit exceeded',
+    ]);
+    expect(describeResponseFlags('XYZ')).toEqual(['XYZ']);
+    expect(describeResponseFlags('-')).toEqual([]);
+  });
+});
+
+describe('httpStatusText', () => {
+  test('names common codes, including Envoy 0', () => {
+    expect(httpStatusText(503)).toBe('Service Unavailable');
+    expect(httpStatusText(0)).toBe('No response');
+    expect(httpStatusText(299)).toBeUndefined();
   });
 });
