@@ -10,7 +10,9 @@ import { Icon } from './Icon';
 
 /**
  * Top card on a detail screen. It's the zoom-transition target for the list
- * row that pushed it (Link.AppleZoomTarget).
+ * row that pushed it (Link.AppleZoomTarget). The target mounts exactly one
+ * native child, so the card must not be flattened away (collapsable={false}),
+ * otherwise its contents are silently dropped and the card renders blank.
  */
 export function DetailHeader({
   title,
@@ -29,6 +31,7 @@ export function DetailHeader({
   return (
     <Link.AppleZoomTarget>
       <View
+        collapsable={false}
         style={[styles.card, { backgroundColor: t.colors.card, borderColor: t.colors.cardBorder }]}>
         <View style={styles.top}>
           {icon ? (
