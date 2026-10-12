@@ -76,17 +76,19 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   const fonts = datumFontFiles();
 
-  // App Group + shared keychain group, reserved for a future Network
-  // Extension (see README "Future"). They need a signing team, so they are
-  // only added when one is configured; simulator builds run without them.
+  // Reserved for a future Network Extension (README "Future"):
+  // - The App Group builds for the simulator without a signing team (Xcode
+  //   embeds it as simulated entitlements), so it is always on. EAS capability
+  //   sync registers it on the Apple team at the first signed build.
+  // - The shared keychain access group needs the team ID prefix, so it (and
+  //   SecureStore's `accessGroup`) is only enabled when APPLE_TEAM_ID is set.
+  //   Turning it on later moves Keychain items: existing sessions sign in again.
   const teamId = process.env.APPLE_TEAM_ID;
   const keychainAccessGroup = teamId ? `${teamId}.${v.bundleIdentifier}.shared` : undefined;
-  const entitlements: Record<string, unknown> | undefined = teamId
-    ? {
-        'com.apple.security.application-groups': [v.appGroup],
-        'keychain-access-groups': [keychainAccessGroup],
-      }
-    : undefined;
+  const entitlements: Record<string, unknown> = {
+    'com.apple.security.application-groups': [v.appGroup],
+    ...(keychainAccessGroup ? { 'keychain-access-groups': [keychainAccessGroup] } : {}),
+  };
 
   return {
     ...config,
