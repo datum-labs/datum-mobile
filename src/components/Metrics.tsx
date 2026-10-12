@@ -161,11 +161,11 @@ function toChartData(points: readonly MetricPoint[], end: number): ChartDataPoin
   return points.map((p) => ({ x: p.t - end, y: p.v }));
 }
 
-/** "18:05", or "Mon 18:05" when the window spans days. */
+/** "18:05", or "Mon 18:05" past 12 hours, where the clock alone would repeat. */
 export function axisTimeLabel(t: number, spanSeconds: number): string {
   const d = new Date(t * 1000);
   const clock = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  return spanSeconds > 36 * 3600 ? `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clock}` : clock;
+  return spanSeconds > 12 * 3600 ? `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clock}` : clock;
 }
 
 /**
