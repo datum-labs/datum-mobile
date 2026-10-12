@@ -23,6 +23,8 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
+type Method = 'GET' | 'POST';
+
 export interface K8sList<T> {
   items?: T[];
   metadata?: { continue?: string; resourceVersion?: string };
@@ -52,21 +54,32 @@ function withQuery(path: string, query?: RequestOptions['query']): string {
 export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified }: ApiClientOptions) {
   const doFetch = fetchImpl ?? ((...args: Parameters<typeof fetch>) => fetch(...args));
 
-  const call = (path: string, token: string, signal?: AbortSignal) =>
+  const call = (method: Method, path: string, token: string, signal?: AbortSignal, body?: string) =>
     doFetch(`${baseUrl}${path}`, {
-      method: 'GET',
-      headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
+      method,
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      },
+      body,
       signal,
     });
 
-  async function get<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  async function request<T>(
+    method: Method,
+    path: string,
+    options: RequestOptions & { body?: unknown } = {}
+  ): Promise<T> {
     const fullPath = withQuery(path, options.query);
+    const payload = options.body === undefined ? undefined : JSON.stringify(options.body);
+    const send = (token: string) => call(method, fullPath, token, options.signal, payload);
     let token = await tokens.getAccessToken();
-    let res = await call(fullPath, token, options.signal);
+    let res = await send(token);
 
     if (res.status === 401) {
       token = await tokens.handleUnauthorized(token);
-      res = await call(fullPath, token, options.signal);
+      res = await send(token);
     }
 
     if (res.status === 403) {
@@ -74,7 +87,7 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
       if (isEmailNotVerifiedDenial(body)) {
         try {
           token = await tokens.refresh();
-          res = await call(fullPath, token, options.signal);
+          res = await send(token);
           body = res.ok ? '' : await res.text();
         } catch {
           // Refresh failed: fall through with the original denial.
@@ -96,6 +109,18 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
       throw new ApiError(res.status, message, path, reason);
     }
     return (await res.json()) as T;
+  }
+
+  function get<T>(path: string, options: RequestOptions = {}): Promise<T> {
+    return request<T>('GET', path, options);
+  }
+
+  /**
+   * POST a review-style object (SelfSubjectAccessReview). The app never
+   * mutates resources; reviews are create-only and side-effect free.
+   */
+  function post<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
+    return request<T>('POST', path, { ...options, body });
   }
 
   /** GET a single object. */
@@ -124,7 +149,7 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
     return items;
   }
 
-  return { get, getResource, listResource };
+  return { get, post, getResource, listResource };
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;

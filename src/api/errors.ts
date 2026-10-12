@@ -28,11 +28,15 @@ export class EmailNotVerifiedError extends Error {
   }
 }
 
-/** Pull `message`/`reason` from a K8s Status body, falling back to the HTTP status. */
+/**
+ * Pull `message`/`reason` from a K8s Status body (or `error` from a Loki-shaped
+ * one), falling back to the HTTP status.
+ */
 export function parseK8sStatus(body: string, status: number): { message: string; reason?: string } {
   try {
-    const json = JSON.parse(body) as { message?: string; reason?: string };
+    const json = JSON.parse(body) as { message?: string; reason?: string; error?: string };
     if (json.message) return { message: json.message, reason: json.reason };
+    if (typeof json.error === 'string' && json.error) return { message: json.error };
   } catch {
     // not JSON
   }

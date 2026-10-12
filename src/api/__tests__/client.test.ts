@@ -134,4 +134,31 @@ describe('api client', () => {
       'https://api.example/apis/resourcemanager.miloapis.com/v1alpha1/projects/p/control-plane/apis/compute.datumapis.com/v1alpha/namespaces/default/instances?limit=500&continue=c1'
     );
   });
+
+  test('post sends a JSON body and retries a 401 with the same body', async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(201, { status: { allowed: true } }));
+    const client = createApiClient({ baseUrl: BASE, tokens: tokens(), fetchImpl });
+    const review = { kind: 'SelfSubjectAccessReview', spec: { resourceAttributes: { verb: 'get' } } };
+    await expect(client.post('/apis/review', review)).resolves.toEqual({ status: { allowed: true } });
+    for (const call of fetchImpl.mock.calls) {
+      const init = call[1] as RequestInit;
+      expect(init.method).toBe('POST');
+      expect(init.body).toBe(JSON.stringify(review));
+      expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json');
+    }
+  });
+
+  test('a Loki-shaped error body becomes the ApiError message', async () => {
+    const fetchImpl = jest.fn(async () =>
+      jsonResponse(400, { status: 'error', error: 'logql: unclosed stream selector' })
+    );
+    const client = createApiClient({ baseUrl: BASE, tokens: tokens(), fetchImpl });
+    await expect(client.get('/apis/logs')).rejects.toMatchObject({
+      status: 400,
+      message: 'logql: unclosed stream selector',
+    });
+  });
 });
