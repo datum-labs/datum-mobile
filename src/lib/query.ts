@@ -1,6 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
-import { focusManager, QueryCache, QueryClient } from '@tanstack/react-query';
+import {
+  defaultShouldDehydrateQuery,
+  focusManager,
+  QueryCache,
+  QueryClient,
+  type Query,
+} from '@tanstack/react-query';
 import { useIsFocused } from 'expo-router';
 import { AppState, type AppStateStatus } from 'react-native';
 
@@ -45,6 +51,14 @@ export const queryPersister = createAsyncStoragePersister({
   key: `datum.query-cache.${env.variant}.v1`,
   throttleTime: 1_000,
 });
+
+/**
+ * Which queries go to disk: the default (successful ones) minus any marked
+ * `meta: { persist: false }`, such as pages of logs.
+ */
+export function shouldPersistQuery(query: Query): boolean {
+  return defaultShouldDehydrateQuery(query) && query.meta?.persist !== false;
+}
 
 /** Bumping this drops every persisted cache (e.g. after a model change). */
 export const PERSIST_BUSTER = `${env.version}-1`;

@@ -83,3 +83,17 @@ export function countLokiValues(response: LokiQueryRangeResponse | undefined): n
   if (response?.status !== 'success' || response.data?.resultType !== 'streams') return 0;
   return (response.data.result ?? []).reduce((sum, stream) => sum + (stream.values?.length ?? 0), 0);
 }
+
+/** `ns + 1` on a digit string: the exclusive end of a window holding exactly one timestamp. */
+export function nextNs(timestampNs: string): string {
+  if (!NS_DIGITS.test(timestampNs)) return timestampNs;
+  const digits = timestampNs.split('');
+  for (let i = digits.length - 1; i >= 0; i--) {
+    if (digits[i] !== '9') {
+      digits[i] = String(Number(digits[i]) + 1);
+      return digits.join('');
+    }
+    digits[i] = '0';
+  }
+  return `1${digits.join('')}`;
+}

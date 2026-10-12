@@ -1,4 +1,4 @@
-import { compareNsDesc, countLokiValues, flattenLokiStreams, nsToMs } from '../loki';
+import { compareNsDesc, countLokiValues, flattenLokiStreams, nextNs, nsToMs } from '../loki';
 import { accessLogStream, streams } from './fixtures';
 
 describe('flattenLokiStreams', () => {
@@ -62,5 +62,13 @@ describe('countLokiValues', () => {
       )
     ).toBe(3);
     expect(countLokiValues({ status: 'error' })).toBe(0);
+  });
+});
+
+describe('nextNs', () => {
+  test('adds one to a digit string, carrying', () => {
+    expect(nextNs('1791834887401579958')).toBe('1791834887401579959');
+    expect(nextNs('1999')).toBe('2000');
+    expect(nextNs('99')).toBe('100');
   });
 });

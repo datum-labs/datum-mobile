@@ -17,6 +17,7 @@ import {
   PERSIST_MAX_AGE_MS,
   queryClient,
   queryPersister,
+  shouldPersistQuery,
   wireAppStateFocus,
 } from '@/lib/query';
 
@@ -98,6 +99,7 @@ export default function RootLayout() {
             persister: queryPersister,
             maxAge: PERSIST_MAX_AGE_MS,
             buster: PERSIST_BUSTER,
+            dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
           }}
           onSuccess={() => setCacheRestored(true)}
           onError={() => setCacheRestored(true)}>
