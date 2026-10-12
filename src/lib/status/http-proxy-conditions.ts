@@ -46,6 +46,8 @@ export type ConditionLike = {
   status: 'True' | 'False' | 'Unknown';
   reason: string;
   message: string;
+  /** Not read here; allowed so served conditions pass through unchanged. */
+  lastTransitionTime?: string | Date;
 };
 
 export type HttpProxyStatusLike = { conditions?: ConditionLike[] };

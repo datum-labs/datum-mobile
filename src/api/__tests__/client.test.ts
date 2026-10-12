@@ -75,8 +75,8 @@ describe('api client', () => {
 
   test('concurrent 401s share the refreshed token', async () => {
     const source = tokens();
-    const fetchImpl = jest.fn(async (_url: string, init: RequestInit) => {
-      const auth = (init.headers as Record<string, string>).Authorization;
+    const fetchImpl = jest.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const auth = (init?.headers as Record<string, string>).Authorization;
       return auth === 'Bearer at-1' ? jsonResponse(401, {}) : jsonResponse(200, { ok: auth });
     });
     const client = createApiClient({ baseUrl: BASE, tokens: source, fetchImpl });

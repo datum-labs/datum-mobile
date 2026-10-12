@@ -24,7 +24,10 @@ const programmed = cond('Programmed', 'True', 'Programmed');
 const accepted = cond('Accepted', 'True', 'Accepted');
 const serviceReady = { name: 'web', ready: cond('Ready', 'True', 'Ready') };
 
-function alb(conditions: ResourceCondition[], services = [serviceReady]): ConnectedAlb {
+function alb(
+  conditions: ResourceCondition[],
+  services: ConnectedAlb['services'] = [serviceReady]
+): ConnectedAlb {
   return {
     proxyName: 'web',
     displayName: 'web',

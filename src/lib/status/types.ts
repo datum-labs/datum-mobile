@@ -32,7 +32,7 @@ export interface RawCondition {
   reason?: string;
   message?: string;
   lastTransitionTime?: string | Date;
-  observedGeneration?: number;
+  observedGeneration?: number | bigint;
 }
 
 /** The four states datum-ui-native's StatusBadge renders. */
