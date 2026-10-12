@@ -65,9 +65,8 @@ export default function ContextSwitcher() {
 
   return (
     // A form sheet wants a single ScrollView as its content, so the header scrolls with the list.
-    <ScrollView
-      style={[styles.root, { backgroundColor: t.colors.background }]}
-      contentContainerStyle={styles.list}>
+    // It has no background of its own: the native sheet supplies the iOS 26 Liquid Glass material.
+    <ScrollView style={styles.root} contentContainerStyle={styles.list}>
       <View style={styles.header} collapsable={false}>
         {org ? (
           <PressableScale onPress={() => setOrg(null)} accessibilityLabel="Back to organizations" style={styles.back}>

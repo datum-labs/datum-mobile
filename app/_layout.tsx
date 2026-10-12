@@ -47,7 +47,6 @@ function RootStack() {
             presentation: 'formSheet',
             sheetAllowedDetents: [0.7, 1],
             sheetGrabberVisible: true,
-            sheetCornerRadius: 28,
             headerShown: false,
             animation: 'default',
             contentStyle: { backgroundColor: 'transparent' },
