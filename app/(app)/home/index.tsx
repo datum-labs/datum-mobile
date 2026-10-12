@@ -4,7 +4,6 @@ import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { ContextPill } from '@/components/ContextPill';
 import { Icon } from '@/components/Icon';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
@@ -179,7 +178,6 @@ export default function Home() {
       </Stack.Toolbar>
       <Screen
         onRefresh={projectId ? () => Promise.all(tiles.map((tile) => tile.q.refetch())) : undefined}>
-        <ContextPill />
         {!projectId ? (
           hydrated ? (
             <NoProjectState />
