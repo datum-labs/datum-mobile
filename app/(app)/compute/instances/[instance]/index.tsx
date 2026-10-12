@@ -2,6 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
+import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
 import { ErrorState, RowSkeletons } from '@/components/states';
@@ -35,6 +36,14 @@ export default function InstanceDetail() {
               subtitle={instance.image}
               status={instanceView(instance)}
             />
+            <Section title="Logs">
+              <ResourceRow
+                icon="doc.text.magnifyingglass"
+                title="Logs"
+                subtitle="Console output from this instance"
+                href={`/compute/instances/${encodeURIComponent(instance.name)}/logs`}
+              />
+            </Section>
             <Section title="Placement">
               <InfoCard
                 rows={[

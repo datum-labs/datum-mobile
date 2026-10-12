@@ -133,6 +133,19 @@ export default function WorkloadDetail() {
               </Section>
             ) : null}
 
+            <Section title="Logs">
+              <ResourceRow
+                icon="doc.text.magnifyingglass"
+                title="Logs"
+                subtitle={
+                  instances.data && instances.data.length > 1
+                    ? `Console output from all ${instances.data.length} instances`
+                    : 'Console output from this workload'
+                }
+                href={`/compute/${encodeURIComponent(workload.name)}/logs`}
+              />
+            </Section>
+
             <Section title="Instances">
               {instances.data ? (
                 instances.data.length === 0 ? (
