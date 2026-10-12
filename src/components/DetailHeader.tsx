@@ -9,14 +9,14 @@ import type { StatusView } from '@/lib/status/types';
 import { Icon } from './Icon';
 
 /**
- * Summary card at the top of a detail screen: icon, status and the resource's
- * identifier on one line. The name itself is the screen's large title, so it
- * isn't repeated here; `title` is only the card's accessibility label.
+ * Metadata line under a detail screen's large title: icon, status and the
+ * resource's identifier, with no card behind it. The name itself is the large
+ * title, so it isn't repeated here; `title` is only the accessibility label.
  *
  * It's the zoom-transition target for the list row that pushed it
  * (Link.AppleZoomTarget). The target mounts exactly one native child, so the
- * card must not be flattened away (collapsable={false}), otherwise its
- * contents are silently dropped and the card renders blank.
+ * container must not be flattened away (collapsable={false}), otherwise its
+ * contents are silently dropped and it renders blank.
  */
 export function DetailHeader({
   title,
@@ -37,7 +37,7 @@ export function DetailHeader({
       <View
         collapsable={false}
         accessibilityLabel={title}
-        style={[styles.card, { backgroundColor: t.colors.card, borderColor: t.colors.cardBorder }]}>
+        style={styles.container}>
         <View style={styles.row}>
           {icon ? (
             <View style={[styles.iconWell, { backgroundColor: t.colors.accent }]}>
@@ -65,14 +65,7 @@ export function DetailHeader({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: 20,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    gap: 10,
-  },
+  container: { paddingHorizontal: 4, paddingBottom: 4, gap: 10 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   body: { flex: 1, gap: 6, alignItems: 'flex-start' },
   iconWell: {
