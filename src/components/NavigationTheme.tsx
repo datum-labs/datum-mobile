@@ -31,13 +31,18 @@ export function NavigationTheme({ children }: { children: ReactNode }) {
   return <ThemeProvider value={theme}>{children}</ThemeProvider>;
 }
 
-/** Shared native-stack options: large Canela titles under a transparent (Liquid Glass) bar. */
+/**
+ * Shared native-stack options for each tab: a transparent (Liquid Glass) bar,
+ * with the large Canela title on the tab's root screen only. Pushed screens
+ * use an inline title: they arrive by zoom transition, and the zoom's
+ * native helper view sits in front of the screen's ScrollView, so UIKit
+ * can't track the scroll and a large title would stay pinned over the content.
+ */
 export function useStackScreenOptions() {
   const t = useDatumTheme();
   const tint = t.scheme === 'dark' ? t.colors.primary : t.palette.midnightFjord;
-  return useMemo(
-    () => ({
-      headerLargeTitle: true,
+  return useMemo(() => {
+    const base = {
       headerTransparent: true,
       headerShadowVisible: false,
       headerLargeTitleShadowVisible: false,
@@ -46,7 +51,10 @@ export function useStackScreenOptions() {
       headerTitleStyle: { fontFamily: t.fonts.sans.semibold, color: t.colors.foreground },
       headerBackButtonDisplayMode: 'minimal' as const,
       contentStyle: { backgroundColor: t.colors.background },
-    }),
-    [t, tint]
-  );
+    };
+    return ({ route }: { route: { name: string } }) => ({
+      ...base,
+      headerLargeTitle: route.name === 'index',
+    });
+  }, [t, tint]);
 }
