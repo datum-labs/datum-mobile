@@ -7,7 +7,7 @@ import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
-import { ErrorState, QueryView, RowSkeletons, SCENES } from '@/components/states';
+import { ErrorState, QueryView, RowSkeletons } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { pluralize } from '@/lib/format';
 import type { DnsRecord } from '@/resources/dns/service';
@@ -82,7 +82,7 @@ export default function DnsZoneDetail() {
               <QueryView
                 query={records}
                 isEmpty={(d) => d.length === 0}
-                empty={{ title: 'No records', description: 'This zone has no record sets yet.', image: SCENES.ridge }}>
+                empty={{ title: 'No records', description: 'This zone has no record sets yet.' }}>
                 {(rows) => (
                   <Animated.View entering={FadeIn.duration(250)}>
                     <Card size="sm" sectioned>

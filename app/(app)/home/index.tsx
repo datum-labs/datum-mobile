@@ -194,7 +194,9 @@ export default function Home() {
                   counts={tile.counts}
                   loading={tile.q.isPending}
                   failed={!!tile.q.error && tile.q.data === undefined}
-                  onPress={() => router.navigate(tile.href)}
+                  // Singular: switch to the tab's existing root (updating its segment)
+                  // instead of pushing a second copy with a back button.
+                  onPress={() => router.navigate(tile.href, { dangerouslySingular: true })}
                 />
               ))}
             </View>

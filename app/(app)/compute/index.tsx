@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
-import { NoProjectState, QueryView, SCENES } from '@/components/states';
+import { NoProjectState, QueryView } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { useSegment } from '@/hooks/useSegment';
 import { instanceView, workloadView } from '@/lib/status/views';
@@ -44,8 +44,7 @@ export default function ComputeIndex() {
             isEmpty={(d) => d.length === 0}
             empty={{
               title: 'No workloads yet',
-              description: 'Deploy a container from Datum Cloud or `datumctl compute` and it shows up here.',
-              image: SCENES.camp,
+              description: 'Workloads you deploy to this project show up here.',
             }}>
             {(items) => (
               <View style={{ gap: 8 }}>
@@ -73,7 +72,7 @@ export default function ComputeIndex() {
           <QueryView
             query={instances}
             isEmpty={(d) => d.length === 0}
-            empty={{ title: 'No instances', description: 'Instances appear once a workload is placed.', image: SCENES.camp }}>
+            empty={{ title: 'No instances', description: 'Instances appear once a workload is placed.' }}>
             {(items) => (
               <View style={{ gap: 8 }}>
                 {items.map((inst, i) => (

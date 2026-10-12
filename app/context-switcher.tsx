@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeOut, SlideInRight, SlideOutLeft } from 'react-nat
 import { useAuth } from '@/auth/AuthProvider';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/PressableScale';
-import { EmptyState, ErrorState, SCENES } from '@/components/states';
+import { EmptyState, ErrorState } from '@/components/states';
 import { useProjectContext } from '@/context/ProjectContext';
 import type { Organization } from '@/resources/organizations/service';
 import { useOrganizations } from '@/resources/organizations/queries';
@@ -90,7 +90,6 @@ export default function ContextSwitcher() {
                 <EmptyState
                   title="No organizations"
                   description="Create an organization in Datum Cloud to get started."
-                  image={SCENES.camp}
                 />
               ) : (
                 orgs.data.map((o) => (
@@ -117,7 +116,6 @@ export default function ContextSwitcher() {
                 <EmptyState
                   title="No projects"
                   description="This organization has no ready projects yet."
-                  image={SCENES.ridge}
                 />
               ) : (
                 projects.data.map((p) => (

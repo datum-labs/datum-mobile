@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
-import { NoProjectState, QueryView, SCENES } from '@/components/states';
+import { NoProjectState, QueryView } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { useSegment } from '@/hooks/useSegment';
 import { useConnectors } from '@/resources/connectors/queries';
@@ -39,7 +39,7 @@ export default function NetworkIndex() {
           <QueryView
             query={networks}
             isEmpty={(d) => d.length === 0}
-            empty={{ title: 'No networks yet', description: 'Private networks your workloads attach to.', image: SCENES.trail }}>
+            empty={{ title: 'No networks yet', description: 'Private networks your workloads attach to.' }}>
             {(items) => (
               <View style={{ gap: 8 }}>
                 {items.map((n, i) => (
@@ -63,7 +63,7 @@ export default function NetworkIndex() {
           <QueryView
             query={subnets}
             isEmpty={(d) => d.length === 0}
-            empty={{ title: 'No subnets', description: 'Subnets are allocated per location as workloads deploy.', image: SCENES.ridge }}>
+            empty={{ title: 'No subnets', description: 'Subnets are allocated per location as workloads deploy.' }}>
             {(items) => (
               <View style={{ gap: 8 }}>
                 {items.map((s, i) => (
@@ -88,7 +88,6 @@ export default function NetworkIndex() {
             empty={{
               title: 'No connectors yet',
               description: 'Datum Desktop and datum-connect devices show up here once registered.',
-              image: SCENES.flags,
             }}>
             {(items) => (
               <View style={{ gap: 8 }}>

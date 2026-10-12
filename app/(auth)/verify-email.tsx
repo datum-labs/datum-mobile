@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api, userScopedBase } from '@/api';
 import { EmailNotVerifiedError } from '@/api/errors';
 import { useAuth } from '@/auth/AuthProvider';
-import { SCENES } from '@/components/states';
+import { EMPTY_STATE_ART } from '@/components/states';
 import { env } from '@/config/env';
 
 export default function VerifyEmail() {
@@ -48,7 +48,7 @@ export default function VerifyEmail() {
         styles.content,
         { paddingTop: insets.top + 48, paddingBottom: insets.bottom + 24 },
       ]}>
-      <Image source={SCENES.trail} style={styles.scene} contentFit="contain" />
+      <Image source={EMPTY_STATE_ART} style={styles.scene} contentFit="contain" />
       <View style={{ gap: 10 }}>
         <Title level={2}>Verify your email</Title>
         <Text size="base" tone="muted">

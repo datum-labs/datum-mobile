@@ -1,28 +1,20 @@
-import {
-  Alert,
-  Button,
-  EmptyContent,
-  Skeleton,
-  useDatumTheme,
-} from '@datum-cloud/datum-ui-native';
+import { Alert, Button, Skeleton, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type ImageSourcePropType } from 'react-native';
+import { Image, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { describeError } from '@/api/errors';
 
 import { Icon } from './Icon';
 
-export const SCENES = {
-  hills: require('@/assets/images/scenes/scene-3.png') as ImageSourcePropType,
-  flags: require('@/assets/images/scenes/scene-9.png') as ImageSourcePropType,
-  camp: require('@/assets/images/scenes/scene-10.png') as ImageSourcePropType,
-  trail: require('@/assets/images/scenes/scene-8.png') as ImageSourcePropType,
-  ridge: require('@/assets/images/scenes/scene-4.png') as ImageSourcePropType,
-  wide: require('@/assets/images/scenes/scene-2.png') as ImageSourcePropType,
-};
+/**
+ * The one empty-state illustration: the three explorers, cut from the
+ * datum.net vector artwork (illustration.svg) and exported at @1x/@2x/@3x so
+ * it stays crisp. The old cloud-portal scene PNGs were too small for iOS.
+ */
+export const EMPTY_STATE_ART = require('@/assets/images/scenes/explorers.png') as ImageSourcePropType;
 
 /** Placeholder rows shaped like ResourceRow, shimmering while data loads. */
 export function RowSkeletons({ count = 5 }: { count?: number }) {
@@ -68,20 +60,41 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
   );
 }
 
+/**
+ * Empty state in the spirit of iOS's ContentUnavailableView: a centred scene,
+ * a title and muted copy straight on the background, with no frames. (The
+ * web-style EmptyContent from datum-ui-native nests cards and corner art,
+ * which reads as a web page on iOS.)
+ */
 export function EmptyState({
   title,
   description,
-  image = SCENES.hills,
   action,
 }: {
   title: string;
   description?: string;
-  image?: ImageSourcePropType;
   action?: ReactNode;
 }) {
   return (
-    <Animated.View entering={FadeIn.duration(250)}>
-      <EmptyContent title={title} description={description} image={image} action={action} />
+    <Animated.View entering={FadeIn.duration(250)} style={styles.empty}>
+      <Image
+        source={EMPTY_STATE_ART}
+        resizeMode="contain"
+        style={styles.emptyImage}
+        accessibilityElementsHidden
+        importantForAccessibility="no"
+      />
+      <View style={styles.emptyText}>
+        <Text size="lg" weight="semibold" style={styles.center} accessibilityRole="header">
+          {title}
+        </Text>
+        {description ? (
+          <Text size="sm" tone="muted" style={styles.center}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+      {action ? <View style={styles.emptyAction}>{action}</View> : null}
     </Animated.View>
   );
 }
@@ -92,7 +105,6 @@ export function NoProjectState() {
     <EmptyState
       title="Choose a project"
       description="Pick an organization and project to see its resources."
-      image={SCENES.flags}
       action={
         <Button
           type="primary"
@@ -119,7 +131,7 @@ export function QueryView<T>({
 }: {
   query: Pick<UseQueryResult<T>, 'data' | 'error' | 'isPending' | 'refetch'>;
   isEmpty?: (data: T) => boolean;
-  empty?: { title: string; description?: string; image?: ImageSourcePropType };
+  empty?: { title: string; description?: string };
   skeleton?: ReactNode;
   children: (data: T) => ReactNode;
 }) {
@@ -132,6 +144,11 @@ export function QueryView<T>({
 }
 
 const styles = StyleSheet.create({
+  empty: { alignItems: 'center', paddingTop: 48, paddingBottom: 32, paddingHorizontal: 32, gap: 18 },
+  emptyImage: { width: 168, height: 171 },
+  emptyText: { alignSelf: 'stretch', gap: 6 },
+  emptyAction: { alignItems: 'center', marginTop: 4 },
+  center: { textAlign: 'center' },
   skeletonRow: {
     flexDirection: 'row',
     alignItems: 'center',

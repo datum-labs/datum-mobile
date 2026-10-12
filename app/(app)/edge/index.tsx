@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
-import { NoProjectState, QueryView, SCENES } from '@/components/states';
+import { NoProjectState, QueryView } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { useSegment } from '@/hooks/useSegment';
 import { pluralize } from '@/lib/format';
@@ -56,7 +56,6 @@ export default function EdgeIndex() {
             empty={{
               title: 'No load balancers yet',
               description: 'ALBs you create in Datum Cloud show up here.',
-              image: SCENES.hills,
             }}>
             {(items) => (
               <View style={{ gap: 8 }}>
@@ -87,7 +86,6 @@ export default function EdgeIndex() {
             empty={{
               title: 'No domains yet',
               description: 'Verified domains let your ALBs serve custom hostnames.',
-              image: SCENES.flags,
             }}>
             {(items) => (
               <View style={{ gap: 8 }}>
@@ -112,7 +110,6 @@ export default function EdgeIndex() {
             empty={{
               title: 'No DNS zones yet',
               description: 'Zones hosted on Datum DNS appear here with their records.',
-              image: SCENES.camp,
             }}>
             {(items) => (
               <View style={{ gap: 8 }}>
