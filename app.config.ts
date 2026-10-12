@@ -111,7 +111,6 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       config: { usesNonExemptEncryption: false },
       infoPlist: {
         CFBundleAllowMixedLocalizations: true,
-        UIViewControllerBasedStatusBarAppearance: true,
       },
     },
     plugins: [

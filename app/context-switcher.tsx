@@ -64,8 +64,11 @@ export default function ContextSwitcher() {
   const projects = useProjects(org?.name);
 
   return (
-    <View style={[styles.root, { backgroundColor: t.colors.background }]}>
-      <View style={styles.header}>
+    // A form sheet wants a single ScrollView as its content, so the header scrolls with the list.
+    <ScrollView
+      style={[styles.root, { backgroundColor: t.colors.background }]}
+      contentContainerStyle={styles.list}>
+      <View style={styles.header} collapsable={false}>
         {org ? (
           <PressableScale onPress={() => setOrg(null)} accessibilityLabel="Back to organizations" style={styles.back}>
             <Icon name="chevron.left" size={16} color={t.colors.primary} weight="semibold" />
@@ -80,7 +83,7 @@ export default function ContextSwitcher() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list}>
+      <View collapsable={false}>
         {!org ? (
           <Animated.View key="orgs" entering={FadeIn.duration(180)} exiting={SlideOutLeft.duration(200)}>
             {orgs.data ? (
@@ -144,14 +147,14 @@ export default function ContextSwitcher() {
             )}
           </Animated.View>
         )}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { paddingHorizontal: 20, paddingTop: 28, paddingBottom: 12, gap: 4 },
+  header: { paddingHorizontal: 8, paddingTop: 28, paddingBottom: 12, gap: 4 },
   back: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6, alignSelf: 'flex-start' },
   list: { paddingHorizontal: 12, paddingBottom: 40 },
   row: {

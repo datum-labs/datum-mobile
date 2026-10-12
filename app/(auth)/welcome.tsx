@@ -65,7 +65,7 @@ export default function Welcome() {
             type="warning"
             title="Sign-in isn't configured"
             description={configError}
-            icon={<Icon name="wrench.and.screwdriver.fill" size={15} />}
+            icon={<Icon name="wrench.and.screwdriver.fill" size={15} color={t.colors.warning} />}
           />
         ) : null}
         {notice || error ? (

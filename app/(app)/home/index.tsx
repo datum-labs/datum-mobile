@@ -1,5 +1,5 @@
 import { Card, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { router, Stack, type Href } from 'expo-router';
+import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -32,17 +32,26 @@ interface AttentionItem {
 
 export default function Home() {
   const t = useDatumTheme();
-  const { selection, hydrated } = useProjectContext();
+  const { selection, hydrated, select } = useProjectContext();
   const projectId = selection?.projectId;
+
+  // Deep link: `<scheme>:/home?org=<org>&project=<project>` opens that project.
+  // Access is still enforced by the API; this only changes what we look at.
+  const link = useLocalSearchParams<{ org?: string; project?: string }>();
+  useEffect(() => {
+    if (!hydrated || !link.org || !link.project) return;
+    if (selection?.orgId === link.org && selection.projectId === link.project) return;
+    select({ orgId: link.org, projectId: link.project });
+  }, [hydrated, link.org, link.project, selection, select]);
 
   // First launch (or the project went away): go straight to the switcher.
   const prompted = useRef(false);
   useEffect(() => {
-    if (hydrated && !selection && !prompted.current) {
+    if (hydrated && !selection && !link.project && !prompted.current) {
       prompted.current = true;
       router.push('/context-switcher');
     }
-  }, [hydrated, selection]);
+  }, [hydrated, selection, link.project]);
 
   const proxies = useHttpProxies(projectId);
   const domains = useDomains(projectId);

@@ -10,6 +10,7 @@ import { AuthProvider, useAuth } from '@/auth/AuthProvider';
 import { AnimatedSplash } from '@/components/AnimatedSplash';
 import { NavigationTheme } from '@/components/NavigationTheme';
 import { ProjectContextProvider, useProjectContext } from '@/context/ProjectContext';
+import { useDevRouteScript } from '@/dev/useDevRouteScript';
 import {
   clearQueryCache,
   PERSIST_BUSTER,
@@ -78,6 +79,7 @@ function SplashGate({ cacheRestored }: { cacheRestored: boolean }) {
   const [done, setDone] = useState(false);
   const ready = state.status !== 'loading' && hydrated && cacheRestored;
   const onDone = useCallback(() => setDone(true), []);
+  useDevRouteScript(done && state.status === 'signedIn');
   if (done) return null;
   return <AnimatedSplash ready={ready} onDone={onDone} />;
 }
