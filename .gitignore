@@ -41,3 +41,11 @@ example
 # generated native folders
 /ios
 /android
+
+# env files (EXPO_PUBLIC_DEV_ACCESS_TOKEN must never be committed)
+.env
+.env.*
+!.env.example
+
+# test output
+coverage/
