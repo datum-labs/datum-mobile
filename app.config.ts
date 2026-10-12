@@ -131,6 +131,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-secure-store',
       'expo-web-browser',
       ['expo-build-properties', { ios: { deploymentTarget: '26.0' } }],
+      './plugins/with-scene-lifecycle',
     ],
     experiments: {
       reactCompiler: true,
