@@ -14,7 +14,6 @@ const VARIANTS = {
     scheme: 'net.datum.cloud.staging',
     authIssuer: 'https://auth.staging.env.datum.net',
     apiUrl: 'https://api.staging.env.datum.net',
-    appGroup: 'group.net.datum.cloud.staging',
     portalUrl: 'https://cloud.staging.env.datum.net',
     // Staging-only VictoriaMetrics gateway for metrics (see
     // src/resources/metrics/source.ts). Production has none yet.
@@ -29,7 +28,6 @@ const VARIANTS = {
     scheme: 'net.datum.cloud',
     authIssuer: 'https://auth.datum.net',
     apiUrl: 'https://api.datum.net',
-    appGroup: 'group.net.datum.cloud',
     portalUrl: 'https://cloud.datum.net',
     telemetryUrl: '',
     // Not created yet: production opts in via infra's pulumi-configmap.yaml.
@@ -98,7 +96,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   // drop the App Group, which free teams can't provision. The URL scheme stays
   // the variant's, so the registered OIDC redirect still matches.
   const bundleIdentifier = process.env.IOS_BUNDLE_ID || v.bundleIdentifier;
-  const appGroup = process.env.IOS_NO_APP_GROUP === '1' ? undefined : v.appGroup;
+  // The App Group follows the effective bundle ID, so a personal bundle ID on
+  // a paid team gets its own group (group.<bundle>); for the variants this is
+  // the reserved group.net.datum.cloud[.staging].
+  const appGroup = process.env.IOS_NO_APP_GROUP === '1' ? undefined : `group.${bundleIdentifier}`;
   const keychainAccessGroup = teamId ? `${teamId}.${bundleIdentifier}.shared` : undefined;
   const entitlements: Record<string, unknown> = {
     ...(appGroup ? { 'com.apple.security.application-groups': [appGroup] } : {}),
@@ -119,6 +120,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: './assets/icon/icon-1024.png',
     ios: {
       bundleIdentifier,
+      // Local App Store Connect uploads set this per build; EAS manages it
+      // remotely (eas.json appVersionSource: remote).
+      ...(process.env.IOS_BUILD_NUMBER ? { buildNumber: process.env.IOS_BUILD_NUMBER } : {}),
       supportsTablet: false,
       // Icon Composer bundle: iOS 26 layered Liquid Glass icon, with the
       // system deriving dark, tinted and clear appearances.
@@ -150,6 +154,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-web-browser',
       ['expo-build-properties', { ios: { deploymentTarget: '26.0' } }],
       './plugins/with-scene-lifecycle',
+      // Datum Connect packet tunnel; a no-op unless IOS_VPN=1 (README "Connect").
+      './plugins/with-datum-vpn',
     ],
     experiments: {
       reactCompiler: true,
