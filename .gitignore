@@ -49,3 +49,7 @@ example
 
 # test output
 coverage/
+
+# Rust Connect core (scripts/build-connect-core.sh output)
+/native/connect-core/target/
+/native/connect-core/build/

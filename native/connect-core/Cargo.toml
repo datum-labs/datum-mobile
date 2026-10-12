@@ -1,0 +1,49 @@
+[package]
+name = "datum-connect-core"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98"
+description = "Datum Connect CONNECT-IP client core for the iOS Network Extension (UniFFI)."
+license = "MIT"
+publish = false
+
+[lib]
+# staticlib for the iOS xcframework; lib for the host probe and tests.
+crate-type = ["staticlib", "lib"]
+name = "datum_connect_core"
+
+[dependencies]
+# Only the transport crate: no kube, no OpenTelemetry (the `otel` feature stays
+# off), no daemon. Pinned to the same release the datumctl plugin ships.
+connect-transport = { git = "https://github.com/datum-cloud/connect", tag = "v1.0.0-preview.28" }
+iroh = { version = "~1.0.0", default-features = false, features = ["tls-ring"] }
+bytes = "1"
+ipnet = "2"
+thiserror = "2"
+tokio = { version = "1.34", features = ["rt-multi-thread", "sync", "time", "macros"] }
+tokio-util = "0.7"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter", "std"] }
+uniffi = "0.32"
+
+[dev-dependencies]
+tokio = { version = "1.34", features = ["full"] }
+
+[workspace]
+members = [".", "probe", "uniffi-bindgen"]
+resolver = "2"
+
+# connect-lib's workspace patches. Cargo applies [patch] only from the root
+# workspace, so the git dependency needs the same pins here.
+[patch.crates-io]
+# h3 0.0.8 predates CONNECT-IP support (hyperium/h3#273).
+h3 = { git = "https://github.com/hyperium/h3", rev = "0e54a16df76102809ad99b03663b559dfc203917" }
+# connect vendors h3-datagram under connect-lib/transport/vendor.
+h3-datagram = { git = "https://github.com/datum-cloud/connect", tag = "v1.0.0-preview.28" }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "unwind"
+strip = "debuginfo"
