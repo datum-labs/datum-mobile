@@ -16,6 +16,9 @@ const VARIANTS = {
     apiUrl: 'https://api.staging.env.datum.net',
     appGroup: 'group.net.datum.cloud.staging',
     portalUrl: 'https://cloud.staging.env.datum.net',
+    // "Datum Cloud iOS" Zitadel app (infra datum-iam-system, ConfigMap
+    // datum-mobile-oidc-id). Public PKCE client, so not a secret.
+    oidcClientId: '394841158565511203',
   },
   production: {
     name: 'Datum',
@@ -25,6 +28,8 @@ const VARIANTS = {
     apiUrl: 'https://api.datum.net',
     appGroup: 'group.net.datum.cloud',
     portalUrl: 'https://cloud.datum.net',
+    // Not created yet: production opts in via infra's pulumi-configmap.yaml.
+    oidcClientId: '',
   },
 } as const;
 
@@ -141,7 +146,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       apiUrl: v.apiUrl,
       auth: {
         issuer: v.authIssuer,
-        clientId: process.env.EXPO_PUBLIC_OIDC_CLIENT_ID ?? '',
+        clientId: process.env.EXPO_PUBLIC_OIDC_CLIENT_ID || v.oidcClientId,
         redirectUri: `${v.scheme}:/oauth/callback`,
         postLogoutRedirectUri: `${v.scheme}:/oauth/logout`,
         endSessionOnLogout: process.env.EXPO_PUBLIC_END_SESSION_ON_LOGOUT === 'true',

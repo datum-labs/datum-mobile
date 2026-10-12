@@ -55,7 +55,7 @@ Both variants install side by side ("Datum Staging" and "Datum").
 | Variable | Where | Purpose |
 |---|---|---|
 | `APP_VARIANT` | build time | `staging` (default) or `production` |
-| `EXPO_PUBLIC_OIDC_CLIENT_ID` | build time, per variant (EAS env) | Client ID of the "Datum Cloud iOS" Zitadel app. Without it the Welcome screen shows a configuration error and sign-in is disabled. |
+| `EXPO_PUBLIC_OIDC_CLIENT_ID` | optional override | Client ID of the "Datum Cloud iOS" Zitadel app. Defaults per variant in `app.config.ts` (staging: `394841158565511203`; production: not created yet). Without one the Welcome screen shows a configuration error and sign-in is disabled. |
 | `EXPO_PUBLIC_END_SESSION_ON_LOGOUT` | build time | `true` to also call Zitadel `end_session` on sign-out (default off) |
 | `APPLE_TEAM_ID` | build time | Enables the shared Keychain access group (see Future) |
 | `EXPO_PUBLIC_DEV_ACCESS_TOKEN` | **dev only** | See the dev token section. `app.config.ts` refuses to configure a production build with it set. |
