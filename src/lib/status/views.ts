@@ -146,11 +146,16 @@ export interface StatusRollup {
   pending: number;
   error: number;
   unknown: number;
+  /** Label of the first unknown-state view (e.g. "Offline" for connectors). */
+  unknownLabel?: string;
 }
 
 export function rollup(views: StatusView[]): StatusRollup {
   const counts: StatusRollup = { total: views.length, success: 0, pending: 0, error: 0, unknown: 0 };
-  for (const view of views) counts[view.status] += 1;
+  for (const view of views) {
+    counts[view.status] += 1;
+    if (view.status === 'unknown' && !counts.unknownLabel) counts.unknownLabel = view.label;
+  }
   return counts;
 }
 
@@ -159,6 +164,11 @@ export function rollupView(counts: StatusRollup): StatusView {
   if (counts.total === 0) return { status: 'unknown', label: 'None' };
   if (counts.error > 0) return { status: 'error', label: `${counts.error} failing` };
   if (counts.pending > 0) return { status: 'pending', label: `${counts.pending} pending` };
-  if (counts.unknown > 0 && counts.success === 0) return { status: 'unknown', label: 'Unknown' };
+  if (counts.unknown > 0 && counts.success === 0) {
+    return {
+      status: 'unknown',
+      label: counts.unknown === 1 ? (counts.unknownLabel ?? 'Unknown') : `${counts.unknown} ${(counts.unknownLabel ?? 'unknown').toLowerCase()}`,
+    };
+  }
   return { status: 'success', label: 'All healthy' };
 }
