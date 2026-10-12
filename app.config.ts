@@ -93,9 +93,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   //   SecureStore's `accessGroup`) is only enabled when APPLE_TEAM_ID is set.
   //   Turning it on later moves Keychain items: existing sessions sign in again.
   const teamId = process.env.APPLE_TEAM_ID;
-  const keychainAccessGroup = teamId ? `${teamId}.${v.bundleIdentifier}.shared` : undefined;
+  // Personal-team device builds (cable installs before org access): use a
+  // personal bundle ID so the real one isn't claimed by a personal team, and
+  // drop the App Group, which free teams can't provision. The URL scheme stays
+  // the variant's, so the registered OIDC redirect still matches.
+  const bundleIdentifier = process.env.IOS_BUNDLE_ID || v.bundleIdentifier;
+  const appGroup = process.env.IOS_NO_APP_GROUP === '1' ? undefined : v.appGroup;
+  const keychainAccessGroup = teamId ? `${teamId}.${bundleIdentifier}.shared` : undefined;
   const entitlements: Record<string, unknown> = {
-    'com.apple.security.application-groups': [v.appGroup],
+    ...(appGroup ? { 'com.apple.security.application-groups': [appGroup] } : {}),
     ...(keychainAccessGroup ? { 'keychain-access-groups': [keychainAccessGroup] } : {}),
   };
 
@@ -112,7 +118,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     platforms: ['ios'],
     icon: './assets/icon/icon-1024.png',
     ios: {
-      bundleIdentifier: v.bundleIdentifier,
+      bundleIdentifier,
       supportsTablet: false,
       // Icon Composer bundle: iOS 26 layered Liquid Glass icon, with the
       // system deriving dark, tinted and clear appearances.
@@ -158,7 +164,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         postLogoutRedirectUri: `${v.scheme}:/oauth/logout`,
         endSessionOnLogout: process.env.EXPO_PUBLIC_END_SESSION_ON_LOGOUT === 'true',
       },
-      appGroup: v.appGroup,
+      appGroup,
       keychainAccessGroup,
       portalUrl: v.portalUrl,
       telemetryUrl: v.telemetryUrl,
