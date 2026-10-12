@@ -176,6 +176,15 @@ export default function AlbDetail() {
               ) : null}
             </DetailHeader>
 
+            <Section title="Logs">
+              <ResourceRow
+                icon="doc.text.magnifyingglass"
+                title="Access logs"
+                subtitle="Requests through this load balancer"
+                href={`/edge/alb/${encodeURIComponent(proxy.name)}/logs`}
+              />
+            </Section>
+
             {proxy.hostnames.length > 0 ? (
               <Section title="Hostnames">
                 {proxy.hostnames.map((hostname) => (
