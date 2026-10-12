@@ -62,7 +62,7 @@ export default function ComputeIndex() {
                       .join(' · ')}
                     meta={imageShortName(w.image)}
                     status={workloadView(w)}
-                    href={`/compute/${encodeURIComponent(w.name)}`}
+                    href={`/workloads/${encodeURIComponent(w.name)}`}
                   />
                 ))}
               </View>
@@ -84,7 +84,7 @@ export default function ComputeIndex() {
                     subtitle={[inst.workloadName, inst.location].filter(Boolean).join(' · ')}
                     meta={inst.externalIP ?? inst.internalIP}
                     status={instanceView(inst)}
-                    href={`/compute/instances/${encodeURIComponent(inst.name)}`}
+                    href={`/instances/${encodeURIComponent(inst.name)}`}
                   />
                 ))}
               </View>

@@ -41,7 +41,7 @@ export default function InstanceDetail() {
                 icon="doc.text.magnifyingglass"
                 title="Logs"
                 subtitle="Console output from this instance"
-                href={`/compute/instances/${encodeURIComponent(instance.name)}/logs`}
+                href={`/instances/${encodeURIComponent(instance.name)}/logs`}
               />
             </Section>
             <Section title="Placement">

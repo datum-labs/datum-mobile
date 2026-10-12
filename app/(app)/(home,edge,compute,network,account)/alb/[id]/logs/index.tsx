@@ -45,7 +45,7 @@ export default function AlbAccessLogs() {
   const openEntry = useCallback(
     (entry: AccessLogEntry) =>
       router.push(
-        `/edge/alb/${encodeURIComponent(id)}/logs/${entry.timestampNs}${
+        `/alb/${encodeURIComponent(id)}/logs/${entry.timestampNs}${
           entry.requestId ? `?rid=${encodeURIComponent(entry.requestId)}` : ''
         }`
       ),

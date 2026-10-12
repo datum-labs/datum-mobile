@@ -59,7 +59,7 @@ export default function Account() {
     setBusy(false);
     if (result.type === 'success') {
       await clearQueryCache();
-      router.replace('/home');
+      router.replace('/(home)/home');
     } else if (result.type === 'error') {
       NativeAlert.alert("Couldn't switch account", result.message);
     }

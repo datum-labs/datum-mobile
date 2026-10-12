@@ -13,23 +13,23 @@ export default function AppTabs() {
       tintColor={tint}
       minimizeBehavior="onScrollDown"
       labelStyle={{ fontFamily: t.fonts.sans.medium }}>
-      <NativeTabs.Trigger name="home">
+      <NativeTabs.Trigger name="(home)">
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="edge">
+      <NativeTabs.Trigger name="(edge)">
         <NativeTabs.Trigger.Label>Edge</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="globe.americas.fill" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="compute">
+      <NativeTabs.Trigger name="(compute)">
         <NativeTabs.Trigger.Label>Compute</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="cpu" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="network">
+      <NativeTabs.Trigger name="(network)">
         <NativeTabs.Trigger.Label>Network</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="point.3.filled.connected.trianglepath.dotted" />
       </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="account">
+      <NativeTabs.Trigger name="(account)">
         <NativeTabs.Trigger.Label>Account</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} />
       </NativeTabs.Trigger>

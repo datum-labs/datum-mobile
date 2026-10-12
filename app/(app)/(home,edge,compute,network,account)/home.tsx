@@ -67,49 +67,49 @@ export default function Home() {
         icon: 'arrow.triangle.branch' as const,
         q: proxies,
         counts: proxies.data && rollup(proxies.data.map((p) => p.view)),
-        href: { pathname: '/edge', params: { segment: 'albs' } } as Href,
+        href: { pathname: '/(edge)/edge', params: { segment: 'albs' } } as Href,
       },
       {
         label: 'Domains',
         icon: 'globe' as const,
         q: domains,
         counts: domains.data && rollup(domains.data.map((d) => d.view)),
-        href: { pathname: '/edge', params: { segment: 'domains' } } as Href,
+        href: { pathname: '/(edge)/edge', params: { segment: 'domains' } } as Href,
       },
       {
         label: 'DNS zones',
         icon: 'list.bullet.rectangle' as const,
         q: zones,
         counts: zones.data && rollup(zones.data.map((z) => z.view)),
-        href: { pathname: '/edge', params: { segment: 'dns' } } as Href,
+        href: { pathname: '/(edge)/edge', params: { segment: 'dns' } } as Href,
       },
       {
         label: 'Workloads',
         icon: 'shippingbox.fill' as const,
         q: workloads,
         counts: workloads.data && rollup(workloads.data.map((w) => workloadView(w))),
-        href: { pathname: '/compute', params: { segment: 'workloads' } } as Href,
+        href: { pathname: '/(compute)/compute', params: { segment: 'workloads' } } as Href,
       },
       {
         label: 'Instances',
         icon: 'cpu' as const,
         q: instances,
         counts: instances.data && rollup(instances.data.map(instanceView)),
-        href: { pathname: '/compute', params: { segment: 'instances' } } as Href,
+        href: { pathname: '/(compute)/compute', params: { segment: 'instances' } } as Href,
       },
       {
         label: 'Networks',
         icon: 'point.3.filled.connected.trianglepath.dotted' as const,
         q: networks,
         counts: networks.data && rollup(networks.data.map((n) => n.view)),
-        href: { pathname: '/network', params: { segment: 'networks' } } as Href,
+        href: { pathname: '/(network)/network', params: { segment: 'networks' } } as Href,
       },
       {
         label: 'Connectors',
         icon: 'cable.connector' as const,
         q: connectors,
         counts: connectors.data && rollup(connectors.data.map((c) => c.view)),
-        href: { pathname: '/network', params: { segment: 'connectors' } } as Href,
+        href: { pathname: '/(network)/network', params: { segment: 'connectors' } } as Href,
       },
     ],
     [proxies, domains, zones, workloads, instances, networks, connectors]
@@ -126,7 +126,7 @@ export default function Home() {
           subtitle: 'Load balancer',
           icon: 'arrow.triangle.branch',
           view: p.view,
-          href: `/edge/alb/${encodeURIComponent(p.name)}`,
+          href: `/alb/${encodeURIComponent(p.name)}`,
         });
     for (const w of workloads.data ?? []) {
       const view = workloadView(w);
@@ -137,7 +137,7 @@ export default function Home() {
           subtitle: 'Workload',
           icon: 'shippingbox.fill',
           view,
-          href: `/compute/${encodeURIComponent(w.name)}`,
+          href: `/workloads/${encodeURIComponent(w.name)}`,
         });
     }
     for (const d of domains.data ?? [])
@@ -148,7 +148,7 @@ export default function Home() {
           subtitle: 'Domain',
           icon: 'globe',
           view: d.view,
-          href: `/edge/domains/${encodeURIComponent(d.name)}`,
+          href: `/domains/${encodeURIComponent(d.name)}`,
         });
     for (const z of zones.data ?? [])
       if (needs(z.view))
@@ -158,7 +158,7 @@ export default function Home() {
           subtitle: 'DNS zone',
           icon: 'list.bullet.rectangle',
           view: z.view,
-          href: `/edge/dns/${encodeURIComponent(z.name)}`,
+          href: `/dns/${encodeURIComponent(z.name)}`,
         });
     const rank = { error: 0, pending: 1, unknown: 2, success: 3 } as const;
     return items.sort((a, b) => rank[a.view.status] - rank[b.view.status]).slice(0, 6);

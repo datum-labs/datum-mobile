@@ -73,7 +73,7 @@ export default function EdgeIndex() {
                     }
                     status={proxy.view}
                     trailing={<CertIcon proxy={proxy} />}
-                    href={`/edge/alb/${encodeURIComponent(proxy.name)}`}
+                    href={`/alb/${encodeURIComponent(proxy.name)}`}
                   />
                 ))}
               </View>
@@ -97,7 +97,7 @@ export default function EdgeIndex() {
                     title={domain.domainName}
                     subtitle={domain.registrar ?? (domain.apex ? 'Apex domain' : undefined)}
                     status={domain.view}
-                    href={`/edge/domains/${encodeURIComponent(domain.name)}`}
+                    href={`/domains/${encodeURIComponent(domain.name)}`}
                   />
                 ))}
               </View>
@@ -123,7 +123,7 @@ export default function EdgeIndex() {
                       zone.recordCount !== undefined ? pluralize(zone.recordCount, 'record') : undefined
                     }
                     status={zone.view}
-                    href={`/edge/dns/${encodeURIComponent(zone.name)}`}
+                    href={`/dns/${encodeURIComponent(zone.name)}`}
                   />
                 ))}
               </View>

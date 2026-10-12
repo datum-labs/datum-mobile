@@ -186,7 +186,7 @@ export default function AlbDetail() {
                 icon="doc.text.magnifyingglass"
                 title="Access logs"
                 subtitle="Requests through this load balancer"
-                href={`/edge/alb/${encodeURIComponent(proxy.name)}/logs`}
+                href={`/alb/${encodeURIComponent(proxy.name)}/logs`}
               />
             </Section>
 
@@ -221,7 +221,7 @@ export default function AlbDetail() {
                       .join(' · ')}
                     href={
                       b.kind === 'connector' && b.connector
-                        ? `/network/connectors/${encodeURIComponent(b.connector)}`
+                        ? `/connectors/${encodeURIComponent(b.connector)}`
                         : undefined
                     }
                   />

@@ -77,7 +77,7 @@ export default function WorkloadDetail() {
                     title={alb.displayName}
                     meta={alb.hostname}
                     status={workloadAlbView(alb, serving)}
-                    href={`/edge/alb/${encodeURIComponent(alb.proxyName)}`}
+                    href={`/alb/${encodeURIComponent(alb.proxyName)}`}
                   />
                 ))}
               </Section>
@@ -142,7 +142,7 @@ export default function WorkloadDetail() {
                     ? `Console output from all ${instances.data.length} instances`
                     : 'Console output from this workload'
                 }
-                href={`/compute/${encodeURIComponent(workload.name)}/logs`}
+                href={`/workloads/${encodeURIComponent(workload.name)}/logs`}
               />
             </Section>
 
@@ -162,7 +162,7 @@ export default function WorkloadDetail() {
                       subtitle={inst.location}
                       meta={inst.externalIP ?? inst.internalIP}
                       status={instanceView(inst)}
-                      href={`/compute/instances/${encodeURIComponent(inst.name)}`}
+                      href={`/instances/${encodeURIComponent(inst.name)}`}
                     />
                   ))
                 )

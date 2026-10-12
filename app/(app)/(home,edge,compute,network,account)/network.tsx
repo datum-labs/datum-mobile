@@ -53,7 +53,7 @@ export default function NetworkIndex() {
                       .join(' · ')}
                     meta={n.ipv4Range ?? n.ipv6Range ?? n.ipv6Prefix}
                     status={n.view}
-                    href={`/network/${encodeURIComponent(n.name)}`}
+                    href={`/networks/${encodeURIComponent(n.name)}`}
                   />
                 ))}
               </View>
@@ -75,7 +75,7 @@ export default function NetworkIndex() {
                     subtitle={[s.network, s.location].filter(Boolean).join(' · ')}
                     meta={s.cidr}
                     status={s.view}
-                    href={s.network ? `/network/${encodeURIComponent(s.network)}` : undefined}
+                    href={s.network ? `/networks/${encodeURIComponent(s.network)}` : undefined}
                   />
                 ))}
               </View>
@@ -99,7 +99,7 @@ export default function NetworkIndex() {
                     title={c.deviceName ?? c.name}
                     subtitle={[c.deviceOs, c.className].filter(Boolean).join(' · ')}
                     status={c.view}
-                    href={`/network/connectors/${encodeURIComponent(c.name)}`}
+                    href={`/connectors/${encodeURIComponent(c.name)}`}
                   />
                 ))}
               </View>

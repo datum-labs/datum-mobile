@@ -31,6 +31,9 @@ export function NavigationTheme({ children }: { children: ReactNode }) {
   return <ThemeProvider value={theme}>{children}</ThemeProvider>;
 }
 
+/** Each tab's root screen; the only screens that get a large title. */
+export const TAB_ROOT_ROUTES = new Set(['home', 'edge', 'compute', 'network', 'account']);
+
 /**
  * Shared native-stack options for each tab: a transparent (Liquid Glass) bar,
  * with the large Canela title on the tab's root screen only. Pushed screens
@@ -54,7 +57,7 @@ export function useStackScreenOptions() {
     };
     return ({ route }: { route: { name: string } }) => ({
       ...base,
-      headerLargeTitle: route.name === 'index',
+      headerLargeTitle: TAB_ROOT_ROUTES.has(route.name),
     });
   }, [t, tint]);
 }
