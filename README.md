@@ -163,7 +163,7 @@ app/
   (app)/home/                 project overview: counts, status rollups, needs-attention
   (app)/edge/                 ALBs · Domains · DNS Zones; alb/[id], domains/[id], dns/[id]
   (app)/compute/              workloads · instances; [workload], instances/[instance]
-  (app)/network/              networks · subnets · connectors; [id], connectors/[id]
+  (app)/network/              networks · subnets · connectors; [id] (incl. Connect this iPhone), connectors/[id]
   (app)/account/              profile, project, switch account, sign out, environment
   context-switcher.tsx        form sheet: organization → project
   oauth/callback.tsx, oauth/logout.tsx
@@ -206,17 +206,83 @@ The upstream bun tests come along with them and run under jest-expo. Generated t
 - **Hero illustration:** a portrait crop of the datum.net hero at @2x and @3x, used by the animated splash and the Welcome screen.
 - **Empty states:** cloud-portal scene artwork.
 
-## Future: connectors from the phone
+## Connect this iPhone to a VPC
 
-A Network Extension (`NEPacketTunnelProvider`) target is planned. Its Keychain
-and App Group are reserved now:
+The Network screen has a **Connect this iPhone** toggle. It joins the phone to
+that network's VPC through [Datum Connect](https://github.com/datum-cloud/connect),
+the same way `datumctl connect join NETWORK --project P` does (connect
+`v1.0.0-preview.28`). Once connected, only the network's IPv6 prefix is routed
+through the tunnel. There's no default route and no DNS change.
 
-- **App Group** `group.net.datum.cloud[.staging]`: always on. The simulator
-  builds it without a team, and EAS registers the capability on the first signed build.
-- **Shared Keychain group** `<TEAM>.<bundle>.shared`: enabled only when
-  `APPLE_TEAM_ID` is set, because it needs the team prefix. `expo-secure-store` then
-  writes with that `accessGroup`. Enabling it later moves the Keychain items,
-  so existing installs sign in again once.
+| Piece | Where | What it does |
+|---|---|---|
+| Control plane | `src/resources/connect/control-plane.ts` | Activation (the service-catalog gate), Connector enrollment and Lease, nearest gateway, ConnectNetworkBinding, leave |
+| App glue | `src/resources/connect/{service,queries,model}.ts`, `src/components/ConnectDeviceSection.tsx` | Wires in the API client, Keychain key and tunnel; drives the toggle |
+| Native module | `modules/datum-vpn` | `NETunnelProviderManager`, the Connector key (ed25519, CryptoKit) in the shared Keychain, the token hand-off, status events |
+| Extension | `native/datum-tunnel` → `ios/DatumTunnel` | `NEPacketTunnelProvider`: tunnel settings (`/128`, approved routes, MTU), packet pump, Lease renewal every 10 s |
+| Data plane | `native/connect-core` (Rust, UniFFI) | CONNECT-IP over iroh using connect's `connect-transport`. Checks the grant the way the daemon does |
+
+### Building it
+
+The extension is only included when `IOS_VPN=1`. Default and personal-team
+builds (`IOS_NO_APP_GROUP=1`) don't include it. They show a notice instead,
+and so does the Simulator, where Network Extensions can't run.
+
+```sh
+scripts/build-connect-core.sh          # Rust → native/connect-core/build (xcframework + Swift bindings)
+IOS_VPN=1 APPLE_TEAM_ID=<TEAM> npx expo prebuild --platform ios --clean
+```
+
+The build script uses the toolchain pinned in
+`native/connect-core/rust-toolchain.toml` and installs it with rustup if it's
+missing. Its output is gitignored, and prebuild fails with a clear message if
+the output is missing.
+
+These IDs all come from the effective bundle ID (`IOS_BUNDLE_ID` or the
+variant's):
+
+| | Value |
+|---|---|
+| Extension | `<bundle>.tunnel` |
+| App Group | `group.<bundle>` (dropped with `IOS_NO_APP_GROUP=1`) |
+| Keychain group | `<TEAM>.<bundle>.shared` |
+| Entitlement (app and extension) | `com.apple.developer.networking.networkextension = [packet-tunnel-provider]` |
+
+A paid team is required, because free personal teams can't sign Network
+Extensions. On that team, enable these on both App IDs (EAS or automatic
+signing registers them): **Network Extensions**, **App Groups** with the
+group above, and **Keychain Sharing**.
+
+### Proving it on a Mac
+
+Network Extensions don't run in the Simulator, so use
+`scripts/connect-e2e.mjs`. It drives the app's real control plane against
+staging and runs the Rust core through `connect-probe`, which pings VPC
+addresses over the tunnel:
+
+```sh
+cargo build --manifest-path native/connect-core/Cargo.toml -p connect-probe
+node scripts/connect-e2e.mjs --project <project> --network default --tcp 3000
+```
+
+### Behaviour and limits
+
+- **One tunnel at a time.** Connecting another network leaves the current one
+  first: the tunnel stops and its binding is deleted.
+- **Liveness.** The extension renews the Connector Lease every 10 s with the
+  user's access token. The app writes that token to the shared Keychain when
+  you connect, whenever it becomes active, and every 5 minutes while
+  connected. If the token expires while the app stays closed, renewal pauses
+  and the tunnel stays up. The gateway may then idle its capacity until the
+  app is opened again. The extension doesn't refresh tokens itself, because
+  Zitadel rotates refresh tokens and two refreshers would race.
+- **Revocation.** Deleting the Connector disconnects the tunnel on the next
+  renewal, as it does for the daemon.
+- **MTU.** The MTU is 1280, the daemon's value for managed gateways. The
+  session fails closed if the path can't carry it.
+- **Location.** `edge.datum.net/` returns its `region=` text only to clients
+  that send no User-Agent, so the app reads the same service's
+  `/api/edge-info` JSON instead.
 
 ## Not done yet
 
