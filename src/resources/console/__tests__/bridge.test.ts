@@ -174,11 +174,20 @@ describe('endedNotice', () => {
 
   test('warns when the platform ended it or it never opened', () => {
     expect(endedNotice({ phase: 'ended', message: 'x', reason: 'Expired' }, true).kind).toBe('warning');
-    expect(endedNotice({ phase: 'ended', message: 'x', reason: 'NoShell' }, false)).toMatchObject({
+    expect(endedNotice({ phase: 'ended', message: 'x', reason: 'NotConnected' }, false)).toMatchObject({
       kind: 'warning',
       title: "Couldn't open the shell",
       canReconnect: true,
     });
+  });
+
+  test("doesn't offer Reconnect when the container has no shell or the instance is gone", () => {
+    expect(endedNotice({ phase: 'ended', message: 'x', reason: 'NoShell' }, false)).toMatchObject({
+      kind: 'warning',
+      title: "Couldn't open the shell",
+      canReconnect: false,
+    });
+    expect(endedNotice({ phase: 'ended', message: 'x', reason: 'InstanceNotFound' }, true).canReconnect).toBe(false);
   });
 
   test("doesn't offer Reconnect after a permission or runtime refusal", () => {

@@ -10,8 +10,11 @@ export interface EndedNotice {
 
 /** Ending reasons that are a normal close, not something to warn about. */
 const CALM = new Set(['', 'Completed', 'ClosedByUser', 'Closed']);
-/** Refusals another session won't fix. */
-const FINAL = new Set(['HTTP403', 'HTTP422', 'HTTP404']);
+/**
+ * Endings another session won't fix: a permission or runtime refusal, an
+ * image without `sh` (every command runs through it) or an instance that's gone.
+ */
+const FINAL = new Set(['HTTP403', 'HTTP422', 'HTTP404', 'NoShell', 'InstanceNotFound']);
 
 /**
  * The Notice for an ended shell. `reachedShell` says whether the terminal
