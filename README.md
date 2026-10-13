@@ -58,6 +58,8 @@ Both variants install side by side ("Datum Staging" and "Datum").
 | `EXPO_PUBLIC_OIDC_CLIENT_ID` | optional override | Client ID of the "Datum Cloud iOS" Zitadel app. Defaults per variant in `app.config.ts` (staging: `394841158565511203`; production: not created yet). Without one the Welcome screen shows a configuration error and sign-in is disabled. |
 | `EXPO_PUBLIC_END_SESSION_ON_LOGOUT` | build time | `true` to also call Zitadel `end_session` on sign-out (default off) |
 | `APPLE_TEAM_ID` | build time | Enables the shared Keychain access group (see Future) |
+| `IOS_VPN` | build time | `1` adds the Connect VPN extension (see Connect this iPhone to a VPC) |
+| `IOS_WIDGETS` | build time | `1` adds the widgets and controls extension (see Widgets and controls) |
 | `EXPO_PUBLIC_DEV_ACCESS_TOKEN` | **dev only** | See the dev token section. `app.config.ts` refuses to configure a production build with it set. |
 
 `app.config.ts` also sets each variant's Patch (assistant) URL as a fallback:
@@ -336,6 +338,118 @@ node scripts/connect-e2e.mjs --project <project> --network default --tcp 3000
 - **Location.** `edge.datum.net/` returns its `region=` text only to clients
   that send no User-Agent, so the app reads the same service's
   `/api/edge-info` JSON instead.
+
+## Widgets and controls
+
+With `IOS_WIDGETS=1` the app embeds `DatumWidgets`, a WidgetKit extension:
+
+| | Kind | What it shows | Tap |
+|---|---|---|---|
+| **Project health** (small) | `net.datum.widgets.project-health` | Project name, "All healthy" or "N need attention", and Home's load balancer, workload, instance and domain counts (a dot when one fails) | Home, with the project selected |
+| **Needs attention** (medium) | `net.datum.widgets.needs-attention` | The top 3 or 4 items from Home's Needs attention: name, kind, badge | Each row opens its screen (`/alb/:id`, `/workloads/:name`, `/domains/:id`, `/dns/:id`) |
+| **Datum health** (Lock Screen) | `net.datum.widgets.health-accessory` | Circular: share of healthy resources as a ring, the count in the middle, a red mark when something fails. Inline: "Datum · all healthy" / "Datum · 2 need attention" | Home |
+| **Ask Patch** (control) | `net.datum.widgets.ask-patch` | Button for Control Centre, the Lock Screen and the Action button | A new Patch chat |
+| **Connect to VPC** (control, `IOS_VPN=1` only) | `net.datum.widgets.connect-vpc` | Toggle for the Connect tunnel | See below |
+
+Controls draw only SF Symbols (system or custom), not template images, so
+Ask Patch uses the system `brain` symbol rather than the Lucide brain the app's
+toolbar uses; a custom symbol drawn from Lucide's outline would replace it.
+
+Every widget has a **Project** option (an App Intent configuration). The
+default, **Current project**, follows the project selected in the app; the
+list offers every project in your organizations.
+
+The look is Datum's where it reads well at widget size: the project name is
+set in Canela (navy on light, the system's primary colour on dark and when
+tinted), everything else uses system fonts and SF Symbols on the system
+background, and only status symbols are coloured. Those are also the parts
+that take the accent on a tinted Home Screen (`widgetAccentable`).
+`scripts/test-widgets.sh --render <dir>` renders the views to PNGs on a Mac.
+
+### Where the data comes from
+
+The extension never calls the API and never refreshes tokens: Zitadel
+rotates refresh tokens, so a second refresher would race the app (the same
+reason the VPN extension doesn't). Instead the app writes a **health
+snapshot** to the App Group (`Library/Application Support/DatumWidgets/health.json`)
+and reloads the timelines:
+
+- Home publishes what it has just loaded, so the widgets match it;
+- every time the app comes to the foreground it re-reads the selected
+  project, the projects the widgets are showing (the extension records them
+  in `requested.json`), and every few hours the project directory;
+- a background task (`expo-background-task`, at most every 30 minutes, when
+  iOS allows) does the same.
+
+The snapshot is built by `src/lib/health/snapshot.ts` from the same queries,
+view models and status helpers as Home (`attentionItems` is Home's Needs
+attention), and `native/datum-widgets/Tests/fixtures/snapshot.json` pins its
+format between the TypeScript and Swift sides. The widget shows "Updated 12
+min ago" once its data is 15 minutes old. Signing out (or another user
+signing in) clears it, and the widgets ask you to open Datum.
+
+Reading the API live from the extension with the token the app shares for
+the VPN was considered and left out: it would mean a Swift copy of the
+portal's HTTPProxy and workload status rules (so the widget could disagree
+with Home), and that token is only shared in VPN builds.
+
+### Links
+
+Widget taps use the app's scheme and expo-router paths, plus the project:
+`net.datum.cloud.staging:/alb/web?org=<org>&project=<project>`. Any screen
+with `org` and `project` in its URL selects that project
+(`useWidgetLinks`). Controls can't open custom-scheme URLs (`OpenURLIntent`
+needs universal links, which aren't set up), so their intents leave a route
+in the App Group, open the app, and `useWidgetLinks` navigates there.
+`/assistant?new=<nonce>` starts a new Patch chat even when Patch is open.
+
+### Connect to VPC
+
+The toggle drives the `DatumTunnel` configuration the app saved at its last
+connect, through `NETunnelProviderManager`, from the widget extension (which
+carries the packet-tunnel entitlement, the App Group and the shared
+Keychain group for this). Its intents are compiled into the app as well, so
+the ones that open the app run there.
+
+- **On** restarts the saved tunnel only if the last join still stands: the
+  Connector key is still in the Keychain, the Connector still exists with
+  this device's key, and the ConnectNetworkBinding still exists, is
+  Accepted at its current generation and grants the same addresses, routes
+  and gateway endpoint as the saved configuration. It checks with the access
+  token the app shares in the Keychain, and only while that token has more
+  than a minute left. If anything fails (you left the network, the
+  Connector was deleted, the grant changed, the token expired, you're
+  offline or signed out) it opens the app at that network's screen to
+  connect again.
+- **Off** stops the tunnel and keeps the join: the binding and its grant
+  stay on the gateway, so On can resume without the app.
+- The app's **Disconnect** still leaves: it stops the tunnel and deletes the
+  binding. After that the control's On opens the app. While a tunnel
+  configuration exists, the app shares a fresh token each time it becomes
+  active, so On keeps working for the token's lifetime after you last opened
+  the app.
+
+### Building it
+
+```sh
+IOS_WIDGETS=1 npx expo prebuild --platform ios --clean            # widgets + Ask Patch
+IOS_WIDGETS=1 IOS_VPN=1 APPLE_TEAM_ID=<TEAM> npx expo prebuild --platform ios --clean   # + Connect to VPC
+```
+
+| | Value |
+|---|---|
+| Extension | `DatumWidgets`, `<bundle>.widgets` |
+| App Group (app and extension) | `group.<bundle>` (the widgets need it; `IOS_NO_APP_GROUP=1` skips the extension) |
+| With `IOS_VPN=1` (extension) | `com.apple.developer.networking.networkextension = [packet-tunnel-provider]`, Keychain group `<TEAM>.<bundle>.shared` |
+
+On the team, enable **App Groups** (with the group above) on the extension's
+App ID, plus **Network Extensions** and **Keychain Sharing** for VPN builds.
+The Simulator build needs no team. The app's own module is
+`modules/datum-widgets` (pod `DatumWidgetsBridge`); binaries built without it
+just don't publish.
+
+`scripts/test-widgets.sh` runs the extension's pure Swift (snapshot decoding,
+timeline, the VPC control's checks) on macOS.
 
 ## Instance shell
 
