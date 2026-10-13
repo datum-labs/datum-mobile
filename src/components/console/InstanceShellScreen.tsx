@@ -75,14 +75,14 @@ function useTerminalTheme(): TerminalTheme {
   }, [t]);
 }
 
-function ShellTitle({ name, state }: { name: string; state: ShellState }) {
-  const pill = shellStatusPill(state);
+function ShellTitle({ name, state }: { name: string; state?: ShellState }) {
+  const pill = state ? shellStatusPill(state) : undefined;
   return (
     <View style={styles.title} accessibilityRole="header">
       <Text weight="semibold" numberOfLines={1} style={styles.titleText}>
         {name}
       </Text>
-      <StatusBadge status={pill.status} label={pill.label} />
+      {pill ? <StatusBadge status={pill.status} label={pill.label} /> : null}
     </View>
   );
 }
@@ -110,7 +110,8 @@ export function InstanceShellScreen() {
   const instance = instanceQuery.data;
   const webViewAvailable = hasWebView();
 
-  const header = (state: ShellState, menu: ReactNode = null) => (
+  // No pill until there's a session to describe.
+  const header = (state?: ShellState, menu: ReactNode = null) => (
     <>
       <Stack.Screen options={{ headerTitle: () => <ShellTitle name={name ?? 'Shell'} state={state} /> }} />
       <Stack.Toolbar placement="left">
@@ -123,7 +124,7 @@ export function InstanceShellScreen() {
   if (!webViewAvailable) {
     return (
       <>
-        {header({ phase: 'idle' })}
+        {header()}
         <Unavailable
           title="Update the app to use the shell"
           description="This build of Datum doesn't include the terminal. Install the latest version to open a shell in an instance."
@@ -134,7 +135,7 @@ export function InstanceShellScreen() {
   if (!instance) {
     return (
       <>
-        {header({ phase: 'starting' })}
+        {header()}
         {instanceQuery.error ? (
           <Unavailable title="Couldn't load the instance" description={describeError(instanceQuery.error)} />
         ) : null}
@@ -144,7 +145,7 @@ export function InstanceShellScreen() {
   if (instance.status !== 'Available' || instance.containers.length === 0) {
     return (
       <>
-        {header({ phase: 'idle' })}
+        {header()}
         <Unavailable
           title="This instance isn't running"
           description="A shell can be opened once the instance is running."
@@ -183,7 +184,7 @@ function ShellSessionView({
   initialCommand: string;
   devRun?: string;
   devKeyboard: boolean;
-  header(state: ShellState, menu?: ReactNode): ReactNode;
+  header(state?: ShellState, menu?: ReactNode): ReactNode;
 }) {
   const t = useDatumTheme();
   const theme = useTerminalTheme();
