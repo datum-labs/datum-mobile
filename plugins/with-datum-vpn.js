@@ -26,6 +26,8 @@ const {
   withXcodeProject,
 } = require('expo/config-plugins');
 
+const { appTarget, consolidateEmbedPhases, entitlementsPlist } = require('./lib/xcode-extension');
+
 const TARGET = 'DatumTunnel';
 const NE_KEY = 'com.apple.developer.networking.networkextension';
 const ROOT = path.resolve(__dirname, '..');
@@ -83,19 +85,6 @@ const withAppInfoPlist = (config) =>
     cfg.modResults.DatumKeychainAccessGroup = keychainGroup;
     return cfg;
   });
-
-const xml = (value) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-/** Entitlements plist: string-array values only. */
-function entitlementsPlist(entries) {
-  const body = Object.entries(entries)
-    .map(
-      ([key, values]) =>
-        `\t<key>${xml(key)}</key>\n\t<array>\n${values.map((v) => `\t\t<string>${xml(v)}</string>\n`).join('')}\t</array>\n`
-    )
-    .join('');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n${body}</dict>\n</plist>\n`;
-}
 
 function copyRecursive(from, to) {
   fs.rmSync(to, { recursive: true, force: true });
@@ -158,15 +147,8 @@ const withExtensionTarget = (config) =>
     project.addBuildPhase([], 'PBXResourcesBuildPhase', 'Resources', target.uuid);
     project.addBuildPhase([XCFRAMEWORK], 'PBXFrameworksBuildPhase', 'Frameworks', target.uuid);
 
-    // The embed phase addTarget created: name it as Xcode does.
-    const copyPhases = objects.PBXCopyFilesBuildPhase ?? {};
-    for (const key of Object.keys(copyPhases)) {
-      const phase = copyPhases[key];
-      if (typeof phase === 'object' && phase.dstSubfolderSpec === 13) {
-        phase.name = '"Embed Foundation Extensions"';
-        copyPhases[`${key}_comment`] = 'Embed Foundation Extensions';
-      }
-    }
+    // One embed phase, named as Xcode names it (the widgets plugin adds another extension).
+    consolidateEmbedPhases(project, appTarget(project).uuid);
 
     const configurations = project.pbxXCBuildConfigurationSection();
     const listId = project.pbxNativeTargetSection()[target.uuid].buildConfigurationList;

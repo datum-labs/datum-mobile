@@ -164,6 +164,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       './plugins/with-console-assets',
       // Datum Connect packet tunnel; a no-op unless IOS_VPN=1 (README "Connect").
       './plugins/with-datum-vpn',
+      // Home Screen / Lock Screen widgets and Control Centre controls; a no-op
+      // unless IOS_WIDGETS=1 (README "Widgets and controls").
+      './plugins/with-datum-widgets',
     ],
     experiments: {
       reactCompiler: true,

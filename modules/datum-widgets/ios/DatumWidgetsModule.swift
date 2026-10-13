@@ -5,7 +5,8 @@ import WidgetKit
 /// The app's side of the Datum widgets (`DatumWidgets` extension, IOS_WIDGETS=1):
 /// writes the health snapshot into the App Group, reloads timelines and
 /// controls, and hands over routes that a Control Centre control asked the
-/// app to open.
+/// app to open. The pod is DatumWidgetsBridge, so its Swift module doesn't
+/// clash with the extension's.
 public class DatumWidgetsModule: Module {
   fileprivate static weak var observing: DatumWidgetsModule?
 
