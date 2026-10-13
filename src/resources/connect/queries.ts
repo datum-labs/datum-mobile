@@ -5,6 +5,7 @@ import { AppState } from 'react-native';
 import { describeError } from '@/api';
 
 import { DatumVpn, type VpnState } from '../../../modules/datum-vpn';
+import { DatumWidgets } from '../../../modules/datum-widgets';
 import { ConnectError, type JoinStage } from './control-plane';
 import { connectView, isActive } from './model';
 import { connectService } from './service';
@@ -32,6 +33,7 @@ export function useVpnState(enabled: boolean) {
     if (!enabled) return;
     const subscription = DatumVpn.onStatusChange(() => {
       void client.invalidateQueries({ queryKey: connectKeys.vpn() });
+      DatumWidgets.reloadControls();
     });
     return () => subscription.remove();
   }, [client, enabled]);
@@ -55,6 +57,32 @@ function useTokenHandOff(active: boolean) {
       subscription.remove();
     };
   }, [active]);
+}
+
+/**
+ * App-wide, while signed in: keep the "Connect to VPC" control usable. When a
+ * tunnel configuration exists (connected or paused from the control), hand
+ * the extension a fresh access token whenever the app becomes active, so the
+ * control can check the join and resume it later without refreshing tokens
+ * itself; and refresh the control when the tunnel's state changes.
+ */
+export function useConnectControlSync(signedIn: boolean) {
+  useEffect(() => {
+    if (!signedIn || !connectService.availability().available) return;
+    const share = async () => {
+      const state = await connectService.state().catch(() => undefined);
+      if (state && state.status !== 'invalid') await connectService.shareAccessToken().catch(() => undefined);
+    };
+    void share();
+    const appState = AppState.addEventListener('change', (next) => {
+      if (next === 'active') void share();
+    });
+    const vpn = DatumVpn.onStatusChange(() => DatumWidgets.reloadControls());
+    return () => {
+      appState.remove();
+      vpn.remove();
+    };
+  }, [signedIn]);
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { useConnectControlSync } from '@/resources/connect/queries';
 import { useWidgetLinks, useWidgetSync } from '@/resources/widgets/hooks';
 
 /**
@@ -12,6 +13,7 @@ export default function AppTabs() {
   // Home Screen widgets and Control Centre controls (README "Widgets and controls").
   useWidgetSync();
   useWidgetLinks(true);
+  useConnectControlSync(true);
   const tint = t.scheme === 'dark' ? t.colors.primary : t.palette.midnightFjord;
   return (
     <NativeTabs

@@ -1,5 +1,6 @@
 import Foundation
 import NetworkExtension
+import WidgetKit
 import os
 
 /// Datum Connect packet tunnel: one CONNECT-IP session to the project VPC
@@ -84,6 +85,7 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
           self.lease = lease
           lease.start()
           completionHandler(nil)
+          Self.reloadControl()
         }
       } catch {
         self.log.error("session failed: \(error.localizedDescription, privacy: .public)")
@@ -104,7 +106,14 @@ final class PacketTunnelProvider: NEPacketTunnelProvider {
     queue.async {
       session?.stop()
       completionHandler()
+      Self.reloadControl()
     }
+  }
+
+  /// The "Connect to VPC" control (DatumWidgets) shows the tunnel's state; the
+  /// app is often not running when the system or the control stops it.
+  private static func reloadControl() {
+    ControlCenter.shared.reloadControls(ofKind: "net.datum.widgets.connect-vpc")
   }
 
   /// Messages from the app: `{"type":"status"}` and `{"type":"token"}`.
