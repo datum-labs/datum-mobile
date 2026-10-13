@@ -47,6 +47,11 @@ function RootStack() {
           name="assistant"
           options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'default' }}
         />
+        {/* Instance shell: presented over the tabs from an instance's "Open shell". */}
+        <Stack.Screen
+          name="console"
+          options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'default' }}
+        />
         <Stack.Screen
           name="context-switcher"
           options={{

@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
 
 import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
@@ -11,6 +11,7 @@ import { useProjectId } from '@/context/ProjectContext';
 import { formatDate } from '@/lib/format';
 import { instanceView } from '@/lib/status/views';
 import { useInstance } from '@/resources/compute/queries';
+import { useShellAvailable } from '@/resources/console/queries';
 import { toConditions } from '@/resources/shared';
 
 export default function InstanceDetail() {
@@ -18,16 +19,22 @@ export default function InstanceDetail() {
   const projectId = useProjectId();
   const query = useInstance(projectId, name);
   const instance = query.data;
+  const canOpenShell = useShellAvailable(projectId, instance) === true;
 
   return (
     <>
       <Stack.Screen options={{ title: name ?? 'Instance' }} />
       {name ? (
         <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button
-          {...ASK_PATCH}
-          onPress={() => askPatchAbout('instance', name)}
-        />
+          <Stack.Toolbar.Button
+            icon="terminal"
+            accessibilityLabel="Open shell"
+            hidden={!canOpenShell}
+            onPress={() =>
+              router.push({ pathname: '/console/[instance]', params: { instance: name } } as Href)
+            }
+          />
+          <Stack.Toolbar.Button {...ASK_PATCH} onPress={() => askPatchAbout('instance', name)} />
         </Stack.Toolbar>
       ) : null}
       <Screen onRefresh={() => query.refetch()}>
