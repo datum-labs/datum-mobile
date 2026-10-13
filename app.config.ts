@@ -18,6 +18,9 @@ const VARIANTS = {
     // Staging-only VictoriaMetrics gateway for metrics (see
     // src/resources/metrics/source.ts). Production has none yet.
     telemetryUrl: 'https://telemetry.staging.env.datum.net',
+    // Patch, the assistant (A2A). The project's AssistantEndpoint wins when
+    // published; this is the fallback.
+    assistantUrl: 'https://patch.staging.env.datum.net',
     // "Datum Cloud iOS" Zitadel app (infra datum-iam-system, ConfigMap
     // datum-mobile-oidc-id). Public PKCE client, so not a secret.
     oidcClientId: '394841158565511203',
@@ -30,6 +33,7 @@ const VARIANTS = {
     apiUrl: 'https://api.datum.net',
     portalUrl: 'https://cloud.datum.net',
     telemetryUrl: '',
+    assistantUrl: 'https://patch.datum.net',
     // Not created yet: production opts in via infra's pulumi-configmap.yaml.
     oidcClientId: '',
   },
@@ -174,6 +178,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       keychainAccessGroup,
       portalUrl: v.portalUrl,
       telemetryUrl: v.telemetryUrl,
+      assistantUrl: v.assistantUrl,
     },
   };
 };

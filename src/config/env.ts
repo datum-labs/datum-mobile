@@ -18,6 +18,11 @@ export interface AppEnv {
   portalUrl: string;
   /** Metrics gateway origin; empty where metrics aren't offered (production). */
   telemetryUrl: string;
+  /**
+   * Patch (the assistant) service origin. Fallback only: the project's
+   * `AssistantEndpoint` resource is asked first (see resources/assistant).
+   */
+  assistantUrl: string;
   version: string;
 }
 
@@ -48,6 +53,10 @@ export const env: AppEnv = {
   // dev client still running on an older native config.
   telemetryUrl:
     extra.telemetryUrl ?? ((extra.variant ?? 'staging') === 'staging' ? 'https://telemetry.staging.env.datum.net' : ''),
+  // The fallback covers a dev client still running on an older native config.
+  assistantUrl:
+    extra.assistantUrl ??
+    ((extra.variant ?? 'staging') === 'staging' ? 'https://patch.staging.env.datum.net' : 'https://patch.datum.net'),
   version: Constants.expoConfig?.version ?? '0.0.0',
 };
 

@@ -7,13 +7,17 @@ const projectRoot = __dirname;
 const config = getDefaultConfig(projectRoot);
 
 /**
- * @datum-cloud/datum-ui-native and -tokens are `link:` dependencies pointing
+ * @datum-cloud/datum-ui-native, -tokens and -assistant-core are `link:` dependencies pointing
  * at a datum-ui checkout. Metro has to watch their real paths, and every
  * import made from inside them must resolve against *this* app's
  * node_modules — otherwise the linked package's own dev copies of react /
  * react-native / reanimated get bundled and React sees two renderers.
  */
-const linkedPackages = ['@datum-cloud/datum-ui-native', '@datum-cloud/datum-ui-tokens']
+const linkedPackages = [
+  '@datum-cloud/datum-ui-native',
+  '@datum-cloud/datum-ui-tokens',
+  '@datum-cloud/datum-ui-assistant-core',
+]
   .map((name) => path.join(projectRoot, 'node_modules', name))
   .filter((dir) => fs.existsSync(dir))
   .map((dir) => fs.realpathSync(dir));
