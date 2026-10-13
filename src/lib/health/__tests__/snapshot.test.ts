@@ -205,6 +205,15 @@ describe('mergeSnapshot', () => {
     ]);
   });
 
+  test("another user's snapshot is discarded", () => {
+    const mine = mergeSnapshot(null, { owner: 'user-a', project: at(NOW), currentProjectId: PROJECT.projectId, now: NOW });
+    expect(mine.owner).toBe('user-a');
+    expect(mergeSnapshot(mine, { now: NOW }).projects).not.toEqual({});
+    const theirs = mergeSnapshot(mine, { owner: 'user-b', now: NOW });
+    expect(theirs).toMatchObject({ owner: 'user-b', projects: {}, directory: [] });
+    expect(theirs.currentProjectId).toBeUndefined();
+  });
+
   test('an older snapshot version is discarded', () => {
     const old = { version: 0, projects: { x: at(NOW) }, directory: [], generatedAt: '' } as unknown as HealthSnapshot;
     expect(mergeSnapshot(old, { now: NOW }).projects).toEqual({});

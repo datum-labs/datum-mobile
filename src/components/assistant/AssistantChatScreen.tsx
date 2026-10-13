@@ -48,6 +48,8 @@ export type AssistantChatParams = {
   mentionLabel?: string;
   /** DEV ONLY: send this prompt on open (headless simulator runs; see useDevRouteScript). */
   devSend?: string;
+  /** A nonce: start a new chat, even when Patch is already open (the Ask Patch control). */
+  new?: string;
 };
 
 /**
@@ -146,6 +148,11 @@ export function AssistantChatScreen() {
   useEffect(() => {
     if (params.chat) void loadChat(params.chat);
   }, [params.chat, loadChat]);
+
+  // Each new nonce is a fresh "Ask Patch" from Control Centre or the Action button.
+  useEffect(() => {
+    if (params.new && !params.chat) newChat();
+  }, [params.new, params.chat, newChat]);
 
   // The history screen hands a picked chat back to the screen that opened it.
   useEffect(() => onOpenChat(instanceId, (id) => void loadChat(id)), [instanceId, loadChat]);

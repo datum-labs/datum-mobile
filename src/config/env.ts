@@ -24,9 +24,11 @@ export interface AppEnv {
    */
   assistantUrl: string;
   version: string;
+  /** The app's URL scheme (deep links, widget links). */
+  scheme: string;
 }
 
-type Extra = Partial<Omit<AppEnv, 'version'>>;
+type Extra = Partial<Omit<AppEnv, 'version' | 'scheme'>>;
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Extra;
 
@@ -58,7 +60,15 @@ export const env: AppEnv = {
     extra.assistantUrl ??
     ((extra.variant ?? 'staging') === 'staging' ? 'https://patch.staging.env.datum.net' : 'https://patch.datum.net'),
   version: Constants.expoConfig?.version ?? '0.0.0',
+  scheme: schemeOf(Constants.expoConfig?.scheme, extra.auth?.redirectUri),
 };
+
+function schemeOf(configured: string | string[] | undefined, redirectUri: string | undefined): string {
+  const first = Array.isArray(configured) ? configured[0] : configured;
+  if (first) return first;
+  // The OIDC redirect is `<scheme>:/oauth/callback`.
+  return redirectUri?.split(':')[0] || 'net.datum.cloud.staging';
+}
 
 /** Human-readable reason the app can't start a sign-in, or undefined when it can. */
 export function authConfigError(config: AppEnv['auth'] = env.auth): string | undefined {

@@ -20,6 +20,9 @@ import {
   shouldPersistQuery,
   wireAppStateFocus,
 } from '@/lib/query';
+// Defines the widgets' background refresh task at startup (a no-op without its native modules).
+import { cancelWidgetRefresh } from '@/resources/widgets/background';
+import { clearHealth } from '@/resources/widgets/service';
 
 // Keep the native splash up until the JS splash has painted an identical frame.
 void SplashScreen.preventAutoHideAsync();
@@ -77,7 +80,12 @@ function CacheOwnerGuard() {
   useEffect(() => {
     if (state.status === 'loading') return;
     const sub = state.status === 'signedIn' ? state.user.sub : null;
-    if (owner.current !== undefined && owner.current !== sub) void clearQueryCache();
+    if (owner.current !== undefined && owner.current !== sub) {
+      void clearQueryCache();
+      // The widgets mustn't keep showing the previous user's projects.
+      void clearHealth();
+      if (!sub) void cancelWidgetRefresh();
+    }
     owner.current = sub;
   }, [state]);
   return null;

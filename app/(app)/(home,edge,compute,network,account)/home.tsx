@@ -14,6 +14,7 @@ import { useProjectContext } from '@/context/ProjectContext';
 import { attentionItems } from '@/lib/health/attention';
 import { instanceView, rollup, workloadView } from '@/lib/status/views';
 import { useConnectors } from '@/resources/connectors/queries';
+import { usePublishProjectHealth } from '@/resources/widgets/hooks';
 import { useInstances, useWorkloads } from '@/resources/compute/queries';
 import { useDnsZones } from '@/resources/dns/queries';
 import { useDomains } from '@/resources/domains/queries';
@@ -22,17 +23,12 @@ import { useNetworks } from '@/resources/networks/queries';
 
 export default function Home() {
   const t = useDatumTheme();
-  const { selection, hydrated, select } = useProjectContext();
+  const { selection, hydrated } = useProjectContext();
   const projectId = selection?.projectId;
 
-  // Deep link: `<scheme>:/home?org=<org>&project=<project>` opens that project.
-  // Access is still enforced by the API; this only changes what we look at.
-  const link = useLocalSearchParams<{ org?: string; project?: string }>();
-  useEffect(() => {
-    if (!hydrated || !link.org || !link.project) return;
-    if (selection?.orgId === link.org && selection.projectId === link.project) return;
-    select({ orgId: link.org, projectId: link.project });
-  }, [hydrated, link.org, link.project, selection, select]);
+  // Deep link: `<scheme>:/home?org=<org>&project=<project>` opens that project
+  // (selected in useWidgetLinks, for every screen).
+  const link = useLocalSearchParams<{ project?: string }>();
 
   // First launch (or the project went away): go straight to the switcher.
   const prompted = useRef(false);
@@ -118,6 +114,13 @@ export default function Home() {
   );
 
   const allLoaded = tiles.every((tile) => tile.q.data !== undefined || tile.q.error);
+
+  // The widgets show what Home shows.
+  usePublishProjectHealth(
+    selection,
+    { proxies: proxies.data, workloads: workloads.data, instances: instances.data, domains: domains.data, zones: zones.data },
+    [proxies, workloads, instances, domains, zones].every((q) => q.data !== undefined || q.error)
+  );
 
   return (
     <>

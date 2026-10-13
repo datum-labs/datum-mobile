@@ -1,12 +1,17 @@
 import { useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
+import { useWidgetLinks, useWidgetSync } from '@/resources/widgets/hooks';
+
 /**
  * System UITabBar (Liquid Glass on iOS 26). Each tab hosts its own native
  * stack so titles, pushes and the zoom transition stay per-tab.
  */
 export default function AppTabs() {
   const t = useDatumTheme();
+  // Home Screen widgets and Control Centre controls (README "Widgets and controls").
+  useWidgetSync();
+  useWidgetLinks(true);
   const tint = t.scheme === 'dark' ? t.colors.primary : t.palette.midnightFjord;
   return (
     <NativeTabs

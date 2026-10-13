@@ -76,6 +76,8 @@ export interface ProjectHealth extends ProjectRef {
 export interface HealthSnapshot {
   version: number;
   generatedAt: string;
+  /** The signed-in user (OIDC `sub`) the data belongs to. */
+  owner?: string;
   /** The app's selected project: what an unconfigured widget shows. */
   currentProjectId?: string;
   projects: Record<string, ProjectHealth>;
@@ -159,6 +161,8 @@ export function projectHealth(input: HealthInput): ProjectHealth {
 }
 
 export interface SnapshotUpdate {
+  /** The signed-in user; a different one starts a fresh snapshot. */
+  owner?: string;
   /** A freshly read project. */
   project?: ProjectHealth;
   /** The app's selection; `null` clears it. */
@@ -174,7 +178,9 @@ function emptySnapshot(now: number): HealthSnapshot {
 /** Folds an update into the previous snapshot, pruning old projects. */
 export function mergeSnapshot(previous: HealthSnapshot | null | undefined, update: SnapshotUpdate): HealthSnapshot {
   const now = update.now ?? Date.now();
-  const base = previous && previous.version === SNAPSHOT_VERSION ? previous : emptySnapshot(now);
+  const sameOwner = !update.owner || !previous?.owner || previous.owner === update.owner;
+  const base = previous && previous.version === SNAPSHOT_VERSION && sameOwner ? previous : emptySnapshot(now);
+  const owner = update.owner ?? base.owner;
   const currentProjectId =
     update.currentProjectId === null ? undefined : (update.currentProjectId ?? base.currentProjectId);
   const projects: Record<string, ProjectHealth> = { ...base.projects };
@@ -204,6 +210,7 @@ export function mergeSnapshot(previous: HealthSnapshot | null | undefined, updat
   return {
     version: SNAPSHOT_VERSION,
     generatedAt: new Date(now).toISOString(),
+    ...(owner ? { owner } : {}),
     ...(currentProjectId ? { currentProjectId } : {}),
     projects: Object.fromEntries(kept.map((p) => [p.projectId, p])),
     directory,
