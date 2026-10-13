@@ -376,9 +376,16 @@ scripts/build-console-wasm.sh        # Go (the version compute's go.mod names): 
 node scripts/build-console-web.mjs   # esbuild: assets/console/terminal.html
 ```
 
+The pin is compute `af9d7d3b1256f5c650da2d4d8fb72134f3375ffc` (main on
+2026-10-12). Built with the Go it selects (go1.26.4), the module is 17,545,484
+bytes (4,226,077 gzip), SHA-256
+`fca5a8df8fa1a109ba1258a0296b59454c4f954d48b73a7112141c4c64ff56b2`; the build
+is reproducible, so a different hash means a different pin or toolchain.
+
 `scripts/build-console-wasm.sh` reads compute from `../compute` with
 `git archive` when that checkout has the commit, and otherwise fetches the commit
-from GitHub. Change `COMPUTE_REF` in the script to move the pin.
+from GitHub. Change `COMPUTE_REF` in the script (and the numbers above) to move
+the pin.
 `plugins/with-console-assets.js` adds a build phase that copies
 `terminal.html` and the WASM into the app as `console/`. Prebuild and that
 phase both fail with these two commands if the files are missing. Release and
