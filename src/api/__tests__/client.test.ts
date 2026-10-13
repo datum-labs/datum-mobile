@@ -176,4 +176,28 @@ describe('api client', () => {
     expect((put.headers as Record<string, string>)['Content-Type']).toBe('application/json');
     expect(del).toMatchObject({ method: 'DELETE', body: '{"kind":"DeleteOptions"}' });
   });
+
+  it('fetch: hands back the raw response with the bearer token, retrying a 401 once', async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, { message: 'expired' }))
+      .mockResolvedValueOnce(jsonResponse(200, { items: [] }));
+    const source = tokens();
+    const client = createApiClient({ baseUrl: BASE, tokens: source, fetchImpl });
+    const res = await client.fetch('/apis/x', { method: 'PATCH', headers: { 'Content-Type': 'application/merge-patch+json' }, body: '{}' });
+    expect(res.status).toBe(200);
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(fetchImpl.mock.calls[1]![0]).toBe(`${BASE}/apis/x`);
+    expect(authHeader(fetchImpl.mock.calls[1]!)).toBe('Bearer at-2');
+    expect((fetchImpl.mock.calls[1]![1] as RequestInit).headers).toMatchObject({
+      'Content-Type': 'application/merge-patch+json',
+      Accept: 'application/json',
+    });
+  });
+
+  it('fetch: passes non-401 failures through for the caller to read', async () => {
+    const fetchImpl = jest.fn().mockResolvedValueOnce(jsonResponse(404, { message: 'gone' }));
+    const client = createApiClient({ baseUrl: BASE, tokens: tokens(), fetchImpl });
+    expect((await client.fetch('/apis/x')).status).toBe(404);
+  });
 });

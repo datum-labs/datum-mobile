@@ -161,7 +161,30 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
     return items;
   }
 
-  return { get, post, put, del, getResource, listResource };
+  /**
+   * An authenticated `fetch` against the API for callers that read the
+   * response themselves (the assistant's shared history helpers): bearer
+   * token, one retry on 401 with a refreshed token, the raw `Response` back.
+   */
+  async function rawFetch(
+    path: string,
+    init: { method?: string; headers?: Record<string, string>; body?: string; signal?: AbortSignal } = {}
+  ): Promise<Response> {
+    const send = (token: string) =>
+      doFetch(`${baseUrl}${path}`, {
+        ...init,
+        headers: { Accept: 'application/json', ...init.headers, Authorization: `Bearer ${token}` },
+      });
+    let token = await tokens.getAccessToken();
+    let res = await send(token);
+    if (res.status === 401) {
+      token = await tokens.handleUnauthorized(token);
+      res = await send(token);
+    }
+    return res;
+  }
+
+  return { get, post, put, del, getResource, listResource, fetch: rawFetch };
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
