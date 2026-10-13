@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/AuthProvider';
 import { Icon } from '@/components/Icon';
 import { Notice } from '@/components/Notice';
+import { ConcentricCardBackground } from '@/components/assistant/ConcentricCardBackground';
 import { NoProjectState } from '@/components/states';
 import { env } from '@/config/env';
 import { useProjectContext } from '@/context/ProjectContext';
@@ -325,8 +326,18 @@ export function AssistantChatScreen() {
             )
           }
         />
-        <View style={[styles.composer, { paddingBottom: keyboardShown ? 8 : insets.bottom + 8 }]}>
+        {/* Docked: the card sits as close to the bottom edge as to the sides, so its
+            concentric bottom corners follow the screen's, and its own bottom padding
+            keeps the input clear of the home indicator. */}
+        <View
+          style={[styles.composer, { paddingBottom: keyboardShown ? 8 : COMPOSER_GUTTER }]}>
+          <View>
+          <ConcentricCardBackground />
           <AssistantComposer
+            style={[
+              styles.composerCard,
+              { paddingBottom: keyboardShown ? 8 : Math.max(8, insets.bottom - COMPOSER_GUTTER + 6) },
+            ]}
             value={draft}
             onChangeText={setDraft}
             onSend={submit}
@@ -341,16 +352,21 @@ export function AssistantChatScreen() {
             }
             testID="assistant-composer"
           />
+          </View>
         </View>
       </KeyboardAvoidingView>
     </AssistantConfigProvider>
   );
 }
 
+const COMPOSER_GUTTER = 12;
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   emptyContent: { flexGrow: 1, justifyContent: 'center', paddingBottom: 24 },
-  composer: { paddingHorizontal: 12, paddingTop: 6 },
+  composer: { paddingHorizontal: COMPOSER_GUTTER, paddingTop: 6 },
+  // ConcentricCardBackground draws the card's fill, border and corners.
+  composerCard: { backgroundColor: 'transparent', borderWidth: 0, shadowOpacity: 0 },
   notice: { marginTop: 16 },
   noProject: { flex: 1, paddingHorizontal: 16 },
   about: { textAlign: 'center', marginTop: -16, marginBottom: 20 },
