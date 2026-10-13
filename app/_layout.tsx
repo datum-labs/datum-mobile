@@ -39,6 +39,8 @@ function RootStack() {
         headerShown: false,
         contentStyle: { backgroundColor: t.colors.background },
         animation: 'fade',
+        // Portrait everywhere; nested stacks and tabs inherit it. Only the shell turns.
+        orientation: 'portrait',
       }}>
       <Stack.Protected guard={!signedIn || emailNotVerified}>
         <Stack.Screen name="(auth)" />
@@ -53,7 +55,13 @@ function RootStack() {
         {/* Instance shell: presented over the tabs from an instance's "Open shell". */}
         <Stack.Screen
           name="console"
-          options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'default' }}
+          options={{
+            presentation: 'fullScreenModal',
+            headerShown: false,
+            animation: 'default',
+            // Portrait or either landscape (not upside down), for a wider terminal.
+            orientation: 'default',
+          }}
         />
         <Stack.Screen
           name="context-switcher"

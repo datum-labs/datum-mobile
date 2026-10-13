@@ -116,7 +116,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     slug: 'datum-mobile',
     version: '0.1.0',
     runtimeVersion: { policy: 'appVersion' },
-    orientation: 'portrait',
+    // Info.plist allows portrait and landscape so the instance shell can turn
+    // sideways; every other screen pins itself to portrait (app/_layout.tsx).
+    orientation: 'default',
     scheme: v.scheme,
     userInterfaceStyle: 'automatic',
     backgroundColor: NAVY,

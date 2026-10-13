@@ -316,7 +316,17 @@ function ShellSessionView({
   return (
     <>
       {header(state, menu)}
-      <View style={[styles.root, { backgroundColor: theme.background, paddingTop: headerHeight }]}>
+      <View
+        style={[
+          styles.root,
+          {
+            backgroundColor: theme.background,
+            paddingTop: headerHeight,
+            // Landscape: keep the terminal and keys clear of the Dynamic Island side.
+            paddingLeft: insets.left,
+            paddingRight: insets.right,
+          },
+        ]}>
         <KeyboardAvoidingView behavior="padding" style={styles.root}>
           <View style={styles.root}>
             <ShellTerminal bridge={bridge} theme={theme} />
