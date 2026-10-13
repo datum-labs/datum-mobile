@@ -1,7 +1,9 @@
 # Datum for iOS (`datum-mobile`)
 
-A read-only iOS app for Datum Cloud: organizations, projects, ALBs (HTTPProxies),
-domains, DNS, compute workloads and instances, networks and connectors.
+An iOS app for Datum Cloud: organizations, projects, ALBs (HTTPProxies),
+domains, DNS, compute workloads and instances, networks and connectors. It's
+read-only apart from creating private networks and joining this iPhone to one
+(Datum Connect).
 Built with Expo SDK 57 / React Native 0.86 (new architecture), Expo Router and
 the system iOS 26 chrome (Liquid Glass tab bar, headers and sheets). Content
 components come from [`@datum-cloud/datum-ui-native`](../datum-ui/packages/native).

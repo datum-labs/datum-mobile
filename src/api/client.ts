@@ -40,7 +40,7 @@ function withQuery(path: string, query?: RequestOptions['query']): string {
 }
 
 /**
- * Thin, read-only fetch client for the Milo control-plane API.
+ * Thin fetch client for the Milo control-plane API.
  *
  * - Injects `Authorization: Bearer <access token>` from the session.
  * - On 401, asks the session for a refreshed token (single-flight) and
@@ -118,8 +118,8 @@ export function createApiClient({ baseUrl, tokens, fetchImpl, onEmailNotVerified
   }
 
   /**
-   * POST: review-style objects (SelfSubjectAccessReview) and, for Connect,
-   * creating this device's own Connector, gateway and binding.
+   * POST: review-style objects (SelfSubjectAccessReview), creating a private
+   * Network, and, for Connect, this device's own Connector, gateway and binding.
    */
   function post<T>(path: string, body: unknown, options: RequestOptions = {}): Promise<T> {
     return request<T>('POST', path, { ...options, body });

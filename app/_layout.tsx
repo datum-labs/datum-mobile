@@ -66,6 +66,20 @@ function RootStack() {
             contentStyle: { backgroundColor: 'transparent' },
           }}
         />
+        {/* Create a private network: from Home and the Network tab. */}
+        <Stack.Screen
+          name="new-network"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.75, 1],
+            sheetGrabberVisible: true,
+            headerShown: true,
+            headerTransparent: true,
+            headerShadowVisible: false,
+            animation: 'default',
+            contentStyle: { backgroundColor: 'transparent' },
+          }}
+        />
       </Stack.Protected>
       <Stack.Screen name="index" />
       <Stack.Screen name="oauth" />

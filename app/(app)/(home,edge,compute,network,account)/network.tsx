@@ -1,6 +1,7 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { View } from 'react-native';
 
+import { NewNetworkCard } from '@/components/HomeNetworks';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
@@ -29,15 +30,22 @@ export default function NetworkIndex() {
   return (
     <>
       <Stack.Screen options={{ title: 'Network' }} />
+      {projectId ? (
+        <Stack.Toolbar placement="right">
+          <Stack.Toolbar.Button
+            icon="plus"
+            accessibilityLabel="New private network"
+            onPress={() => router.push('/new-network')}
+          />
+        </Stack.Toolbar>
+      ) : null}
       <Screen onRefresh={projectId ? () => active.refetch() : undefined}>
         <Segmented options={SEGMENTS} value={segment} onChange={setSegment} />
         {!projectId ? (
           <NoProjectState />
         ) : segment === 'networks' ? (
           <QueryView
-            query={networks}
-            isEmpty={(d) => d.length === 0}
-            empty={{ title: 'No networks yet', description: 'Private networks your workloads attach to.' }}>
+            query={networks}>
             {(items) => (
               <View style={{ gap: 8 }}>
                 {items.map((n, i) => (
@@ -54,6 +62,7 @@ export default function NetworkIndex() {
                     href={`/networks/${encodeURIComponent(n.name)}`}
                   />
                 ))}
+                <NewNetworkCard index={items.length} prominent={items.length === 0} />
               </View>
             )}
           </QueryView>

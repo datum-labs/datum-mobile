@@ -1,6 +1,7 @@
 import { Button, Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Host, Toggle } from '@expo/ui/swift-ui';
 import { disabled } from '@expo/ui/swift-ui/modifiers';
+import { useEffect, useRef } from 'react';
 import { Alert, View } from 'react-native';
 
 import { unavailableCopy } from '@/resources/connect/model';
@@ -14,19 +15,37 @@ import { Section } from './Section';
  * "Connect this iPhone" on a Network: a native toggle that joins this device
  * to the network's VPC through Datum Connect (as `datumctl connect join`
  * does), its state, the assigned address and routes, and Disconnect.
+ *
+ * `autoConnect` (a network just created in the app) joins as soon as the
+ * network is Ready, i.e. has its IPv6 prefix, which the gateway routes.
  */
 export function ConnectDeviceSection({
   project,
   network,
   displayName,
+  networkReady = true,
+  autoConnect = false,
+  onAutoConnectStarted,
 }: {
   project: string;
   network: string;
   displayName: string;
+  networkReady?: boolean;
+  autoConnect?: boolean;
+  onAutoConnectStarted?: () => void;
 }) {
   const t = useDatumTheme();
   const device = useConnectThisDevice(project, network, displayName);
   const { view } = device;
+
+  const started = useRef(false);
+  const waiting = autoConnect && !networkReady && view.phase === 'disconnected';
+  useEffect(() => {
+    if (!autoConnect || started.current || !networkReady || view.phase !== 'disconnected') return;
+    started.current = true;
+    device.connect();
+    onAutoConnectStarted?.();
+  }, [autoConnect, networkReady, view.phase, device, onAutoConnectStarted]);
 
   if (view.phase === 'unavailable') {
     const copy = unavailableCopy(device.availability);
@@ -68,12 +87,19 @@ export function ConnectDeviceSection({
               label="Connect this iPhone"
               systemImage="iphone.gen3.radiowaves.left.and.right"
               onIsOnChange={onToggle}
-              modifiers={[disabled(view.busy)]}
+              modifiers={[disabled(view.busy || waiting)]}
             />
           </Host>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <StatusBadge status={view.badge.status} label={view.badge.label} />
-            {view.detail ? (
+            <StatusBadge
+              status={waiting ? 'pending' : view.badge.status}
+              label={waiting ? 'Waiting' : view.badge.label}
+            />
+            {waiting ? (
+              <Text size="sm" tone="muted" style={{ flex: 1 }}>
+                Setting up the network. This iPhone joins as soon as it&apos;s ready.
+              </Text>
+            ) : view.detail ? (
               <Text size="sm" tone="muted" mono={view.phase === 'connected'} numberOfLines={2} selectable style={{ flex: 1 }}>
                 {view.detail}
               </Text>
@@ -122,7 +148,7 @@ export function ConnectDeviceSection({
           }
         />
       ) : null}
-      {view.phase === 'disconnected' && !view.error ? (
+      {view.phase === 'disconnected' && !view.error && !waiting ? (
         <Text size="xs" tone="muted" style={{ paddingHorizontal: 4, color: t.colors.mutedForeground }}>
           Routes only this network&apos;s private IPv6 prefix through Datum. Everything else stays on your normal
           connection.

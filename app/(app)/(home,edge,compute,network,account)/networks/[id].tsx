@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 
 import { ConnectDeviceSection } from '@/components/ConnectDeviceSection';
 import { DetailHeader } from '@/components/DetailHeader';
@@ -11,7 +11,8 @@ import { formatDate } from '@/lib/format';
 import { useNetwork } from '@/resources/networks/queries';
 
 export default function NetworkDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // `connect=1`: just created from New Network; join this iPhone once it's Ready.
+  const { id, connect } = useLocalSearchParams<{ id: string; connect?: string }>();
   const projectId = useProjectId();
   const query = useNetwork(projectId, id);
   const network = query.data;
@@ -35,7 +36,14 @@ export default function NetworkDetail() {
               status={network.view}
             />
             {projectId ? (
-              <ConnectDeviceSection project={projectId} network={network.name} displayName={network.displayName} />
+              <ConnectDeviceSection
+                project={projectId}
+                network={network.name}
+                displayName={network.displayName}
+                networkReady={!!network.ipv6Prefix}
+                autoConnect={connect === '1'}
+                onAutoConnectStarted={() => router.setParams({ connect: undefined })}
+              />
             ) : null}
             <Section title="Addressing">
               <InfoCard

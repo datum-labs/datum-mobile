@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PATCH_ICON } from '@/components/assistant/askPatch';
+import { HomeNetworks } from '@/components/HomeNetworks';
 import { Icon } from '@/components/Icon';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
@@ -85,13 +86,6 @@ export default function Home() {
         href: { pathname: '/(compute)/compute', params: { segment: 'instances' } } as Href,
       },
       {
-        label: 'Networks',
-        icon: 'point.3.filled.connected.trianglepath.dotted' as const,
-        q: networks,
-        counts: networks.data && rollup(networks.data.map((n) => n.view)),
-        href: { pathname: '/(network)/network', params: { segment: 'networks' } } as Href,
-      },
-      {
         label: 'Connectors',
         icon: 'cable.connector' as const,
         q: connectors,
@@ -99,7 +93,7 @@ export default function Home() {
         href: { pathname: '/(network)/network', params: { segment: 'connectors' } } as Href,
       },
     ],
-    [proxies, domains, zones, workloads, instances, networks, connectors]
+    [proxies, domains, zones, workloads, instances, connectors]
   );
 
   const attention = useMemo(
@@ -139,13 +133,14 @@ export default function Home() {
         />
       </Stack.Toolbar>
       <Screen
-        onRefresh={projectId ? () => Promise.all(tiles.map((tile) => tile.q.refetch())) : undefined}>
+        onRefresh={projectId ? () => Promise.all([networks.refetch(), ...tiles.map((tile) => tile.q.refetch())]) : undefined}>
         {!projectId ? (
           hydrated ? (
             <NoProjectState />
           ) : null
         ) : (
           <>
+            <HomeNetworks projectId={projectId} />
             <View style={styles.grid}>
               {tiles.map((tile, i) => (
                 <SummaryTile
