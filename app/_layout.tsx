@@ -42,6 +42,11 @@ function RootStack() {
       </Stack.Protected>
       <Stack.Protected guard={signedIn && !emailNotVerified}>
         <Stack.Screen name="(app)" />
+        {/* Patch, the assistant: presented over the tabs from Home and "Ask Patch about this". */}
+        <Stack.Screen
+          name="assistant"
+          options={{ presentation: 'fullScreenModal', headerShown: false, animation: 'default' }}
+        />
         <Stack.Screen
           name="context-switcher"
           options={{

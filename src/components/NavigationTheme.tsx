@@ -41,7 +41,7 @@ export const TAB_ROOT_ROUTES = new Set(['home', 'edge', 'compute', 'network', 'a
  * native helper view sits in front of the screen's ScrollView, so UIKit
  * can't track the scroll and a large title would stay pinned over the content.
  */
-export function useStackScreenOptions() {
+export function useStackScreenOptions(largeTitleRoutes: ReadonlySet<string> = TAB_ROOT_ROUTES) {
   const t = useDatumTheme();
   const tint = t.scheme === 'dark' ? t.colors.primary : t.palette.midnightFjord;
   return useMemo(() => {
@@ -57,7 +57,7 @@ export function useStackScreenOptions() {
     };
     return ({ route }: { route: { name: string } }) => ({
       ...base,
-      headerLargeTitle: TAB_ROOT_ROUTES.has(route.name),
+      headerLargeTitle: largeTitleRoutes.has(route.name),
     });
-  }, [t, tint]);
+  }, [t, tint, largeTitleRoutes]);
 }

@@ -171,6 +171,11 @@ export default function Home() {
       <Stack.Screen options={{ title: selection?.projectName ?? 'Home' }} />
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
+          icon="sparkles"
+          accessibilityLabel="Ask Patch"
+          onPress={() => router.push('/assistant')}
+        />
+        <Stack.Toolbar.Button
           icon="arrow.left.arrow.right"
           accessibilityLabel="Switch project"
           onPress={() => router.push('/context-switcher')}
