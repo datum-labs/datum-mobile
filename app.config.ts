@@ -158,6 +158,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-web-browser',
       ['expo-build-properties', { ios: { deploymentTarget: '26.0' } }],
       './plugins/with-scene-lifecycle',
+      // Instance shell: the terminal page and console WASM as bundle files (README "Instance shell").
+      './plugins/with-console-assets',
       // Datum Connect packet tunnel; a no-op unless IOS_VPN=1 (README "Connect").
       './plugins/with-datum-vpn',
     ],

@@ -53,3 +53,6 @@ coverage/
 # Rust Connect core (scripts/build-connect-core.sh output)
 /native/connect-core/target/
 /native/connect-core/build/
+
+# Instance shell client (scripts/build-console-wasm.sh, scripts/build-console-web.mjs output)
+/assets/console/
