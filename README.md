@@ -171,6 +171,7 @@ app/
   (app)/compute/              workloads · instances; [workload], instances/[instance]
   (app)/network/              networks · subnets · connectors; [id] (incl. Connect this iPhone), connectors/[id]
   (app)/account/              profile, project, switch account, sign out, environment
+  console/[instance].tsx      instance shell, full screen over the tabs
   context-switcher.tsx        form sheet: organization → project
   assistant/                  Patch, full screen over the tabs: index (chat), history
   oauth/callback.tsx, oauth/logout.tsx
@@ -335,6 +336,106 @@ node scripts/connect-e2e.mjs --project <project> --network default --tcp 3000
 - **Location.** `edge.datum.net/` returns its `region=` text only to clients
   that send no User-Agent, so the app reads the same service's
   `/api/edge-info` JSON instead.
+
+## Instance shell
+
+An instance's screen has an **Open shell** button (the `terminal` symbol) when
+the instance is running, its runtime class advertises `exec`
+(`spec.capabilities.features`), you may create `InstanceConsoleSession`s and
+the project's session allowance isn't zero. These are the checks the portal's
+compute plugin makes. The shell opens full screen, with the instance name and a
+Connecting / Connected / Ended pill in the header.
+
+It uses the portal's design: compute's console client is Go compiled to
+WebAssembly (`cmd/console-wasm`), and the app runs it in a WebView next to
+xterm.js. Traffic goes from the WebView to the cell through iroh relays, over
+HTTPS and WebSocket. The control plane is never in the data path.
+
+| Piece | Where | What it does |
+|---|---|---|
+| Control plane | `src/resources/console/control-plane.ts` | `InstanceConsoleSession` create, watch, read, delete; ending explanations; `ShellSession` (create with the client's key, wait for `Ready=True/SessionReady` within `READY_TIMEOUT_MS`, connect, delete); shell access checks |
+| App glue | `src/resources/console/{service,queries,bridge,protocol,presenters}.ts` | API client and streaming watch, `useShellAvailable`, the WebView bridge, Notice copy |
+| Screen | `app/console/[instance].tsx`, `src/components/console/` | WebView, key row (Esc, Tab, sticky Ctrl, arrows, `\|` `~` `-` `/`, keyboard toggle, haptics), keyboard avoidance, quick commands (`bolt` menu), ended Notice with Reconnect |
+| Terminal page | `native/console-web/` → `assets/console/terminal.html` | xterm.js + fit addon themed from the app, the bridge receiver, one Web Worker per session running the WASM |
+| Client | compute `cmd/console-wasm` → `assets/console/console-session.wasm` | `datumExec.publicKey()` / `connect()`; the private key stays in the worker |
+
+The control plane, worker, connector and WASM adapter are ports of the compute
+plugin's `console-sessions.ts`, `shell-session.ts`, `shell-command.ts`,
+`instance-shell.ts` and `console-client/*` at compute `af9d7d3b`. compute is
+AGPL-3.0 (Datum Technology); each ported file says where it came from.
+
+### Building it
+
+The WASM is about 17 MB (4 MB gzip). It's gitignored and built from a pinned
+compute commit, so the repo doesn't carry a binary that changes with every
+compute bump (LFS isn't set up), and the commit is recorded in
+`assets/console/BUILD.json`.
+
+```sh
+scripts/build-console-wasm.sh        # Go (the version compute's go.mod names): wasm + wasm_exec.js
+node scripts/build-console-web.mjs   # esbuild: assets/console/terminal.html
+```
+
+`scripts/build-console-wasm.sh` reads compute from `../compute` with
+`git archive` when that checkout has the commit, and otherwise fetches the commit
+from GitHub. Change `COMPUTE_REF` in the script to move the pin.
+`plugins/with-console-assets.js` adds a build phase that copies
+`terminal.html` and the WASM into the app as `console/`. Prebuild and that
+phase both fail with these two commands if the files are missing. Release and
+EAS builds need them too.
+
+The page is a file in the app bundle, so it's part of the native build:
+after changing `native/console-web`, rebuild the page and the app. Metro
+doesn't serve it.
+
+### Bridge
+
+The app drives the page with `injectJavaScript` and the page answers with
+`postMessage` (`src/resources/console/protocol.ts`):
+
+- App → page: `getPublicKey`, `connect`, `input`, `key`, `ctrl`, `resize`, `end`, `setTheme`, `focus`, `blur`, `reset`.
+- Page → app: `ready`, `publicKey`, `connected`, `output-activity`, `ended`, `error`, `ctrl`, `size`, `focus`.
+
+Each attempt has its own `sid`. `getPublicKey` starts a fresh worker in the
+page, and both sides drop messages for any other `sid`. Output stays in the
+page. Sessions are single use, so **Reconnect** and the quick commands always
+create a new session, and closing the screen deletes the session.
+
+### Binaries without the WebView
+
+`react-native-webview` is a native module. A dev client or release built
+before it was added doesn't have it, so the shell screen checks for
+`RNCWebViewModule` before requiring the package. Without it, the screen shows
+"Update the app to use the shell" and the rest of the app keeps working.
+
+### Proving it
+
+`scripts/console-e2e.mjs` runs the app's control plane and the same WASM
+through the page's adapter in Node 24 (which has `fetch` and `WebSocket`),
+against staging:
+
+```sh
+node scripts/console-e2e.mjs --project <project> --instance <instance> --run 'uname -a'
+```
+
+On a simulator, the dev-only route params `devRun` (lines separated by `;;`,
+typed once per launch after connecting, so Fast Refresh doesn't replay them)
+and `devKeyboard=1` (focus the terminal so the keyboard shows) let the route
+script drive a session without taps:
+`/instances/<name>|/console/<name>?devRun=uname -a;;ls /`. Only run read-only
+commands: the shell runs as you.
+
+### Limits
+
+- The cell gives a session 60 s to connect and a command at most an hour, and
+  allows at most three shells per instance. Projects get ten open sessions by
+  default.
+- An image needs `sh`, because Datum runs every command through it. Without
+  one, the session ends as `NoShell`.
+- The unikernel runtime class doesn't advertise `exec` on staging yet, so
+  unikernel instances don't offer a shell.
+- iOS suspends the WebView in the background, and a shell left there ends as
+  `Disconnected`.
 
 ## Not done yet
 
