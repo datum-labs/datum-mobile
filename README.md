@@ -19,10 +19,10 @@ pnpm install          # .npmrc sets node-linker=hoisted, which Expo needs with p
 cp .env.example .env.local
 ```
 
-`@datum-cloud/datum-ui-native` and `@datum-cloud/datum-ui-tokens` are `link:`
-dependencies on a datum-ui checkout at `../.worktrees/datum-ui-native`. Build
-that workspace first (`pnpm build` there produces `fonts/`, `assets/` and
-`dist/`). `metro.config.js` watches the linked folders and resolves every bare
+`@datum-cloud/datum-ui-native`, `@datum-cloud/datum-ui-tokens` and
+`@datum-cloud/datum-ui-assistant-core` are `link:` dependencies on a datum-ui
+checkout at `../.worktrees/datum-ui-native`. Build that workspace first
+(`pnpm build` there produces `fonts/`, `assets/` and `dist/`). `metro.config.js` watches the linked folders and resolves every bare
 import made inside them from this app's `node_modules`, so only one React /
 React Native / Reanimated is bundled. Switch to the published packages once
 they're released.
@@ -59,6 +59,10 @@ Both variants install side by side ("Datum Staging" and "Datum").
 | `EXPO_PUBLIC_END_SESSION_ON_LOGOUT` | build time | `true` to also call Zitadel `end_session` on sign-out (default off) |
 | `APPLE_TEAM_ID` | build time | Enables the shared Keychain access group (see Future) |
 | `EXPO_PUBLIC_DEV_ACCESS_TOKEN` | **dev only** | See the dev token section. `app.config.ts` refuses to configure a production build with it set. |
+
+`app.config.ts` also sets each variant's Patch (assistant) URL as a fallback:
+`https://patch.staging.env.datum.net` and `https://patch.datum.net`. The app
+asks the project's `AssistantEndpoint` first.
 
 `EXPO_PUBLIC_*` values are inlined into the JS bundle. Never put secrets in them.
 
@@ -147,7 +151,9 @@ production. Keep tokens in your shell, never in a committed file.
 `datum.dev.routeScript` (`/edge|/edge/alb/<name>`) from AsyncStorage once at
 launch, so headless simulator runs can reach screens without taps.
 `simctl openurl` shows an "Open in…?" prompt that can't be dismissed
-headlessly.
+headlessly. `/assistant?devSend=<prompt>` (also `__DEV__` only) sends that
+prompt once when Patch opens, so a headless run can drive a real turn. Use
+read-only prompts: Patch acts as you.
 
 Deep link: `<scheme>:/home?org=<org>&project=<project>` selects a project.
 
@@ -166,11 +172,13 @@ app/
   (app)/network/              networks · subnets · connectors; [id] (incl. Connect this iPhone), connectors/[id]
   (app)/account/              profile, project, switch account, sign out, environment
   context-switcher.tsx        form sheet: organization → project
+  assistant/                  Patch, full screen over the tabs: index (chat), history
   oauth/callback.tsx, oauth/logout.tsx
 src/
   auth/        OIDC client, PKCE sign-in, Keychain store, SessionManager (refresh mutex)
   api/         fetch client (bearer, 401 retry, email-verification), scope builders, generated types
   resources/   per resource: service.ts (raw fetchers) + queries.ts (key factories, hooks)
+  hooks/       useAssistantChat (Patch's stream state) and screen helpers
   lib/status/  ports of the portal/compute status helpers (+ their upstream tests)
   components/  app composites on datum-ui-native (rows, glass controls, splash, states)
 ```
@@ -196,6 +204,50 @@ provisioning, as the portal does. Every list supports pull-to-refresh.
 The upstream bun tests come along with them and run under jest-expo. Generated types are copied from cloud-portal by
 `scripts/sync-api-types.mjs`, which records the source commit in
 `src/api/generated/SOURCE.json`.
+
+## Patch, the assistant
+
+Patch answers questions about the current project. It opens full screen from
+the sparkles button on Home, and from **Ask Patch about this** on ALB,
+workload, instance, domain and DNS zone screens, which puts that resource in
+the prompt as a mention (`@HTTPProxy/web-alb …` in the text, plus
+`metadata.mentions`). Everything is scoped to the selected project; with none
+selected it shows the project picker prompt.
+
+| Piece | Where | What it does |
+|---|---|---|
+| Shared core | `@datum-cloud/datum-ui-assistant-core` | Types, A2A stream adapter, SSE parser, event → `UIMessage` reducer, transport, history helpers. The web assistant uses the same package |
+| UI | `@datum-cloud/datum-ui-native` (`AssistantThread`, `AssistantComposer`, …) | Thread, markdown answers, composer, suggestions, empty state, conversation rows |
+| Chat state | `src/hooks/useAssistantChat.ts` | One conversation: send, stop, retry, open, new. Stream events are batched per frame |
+| Data | `src/resources/assistant/` | Endpoint discovery, history (react-query, optimistic archive/delete/rename), link mapping, copy |
+| Screens | `src/components/assistant/`, `app/assistant/` | Chat (close, history, new chat) and history (recent/archived, swipe to archive or delete, long-press to rename) |
+
+**Chat** goes straight to the service's A2A endpoint (`SendStreamingMessage`
+on `{AssistantEndpoint url}/a2a`) with the user's own access token, so tools
+run as the user. The app's session supplies the token, and a 401 refreshes it
+and retries once. `expo/fetch` streams the response; React Native's built-in
+fetch can't. Stop aborts the stream and sends `CancelTask`. If the
+connection drops mid-turn, the transport polls `GetTask` and replaces the
+partial answer with the stored one.
+
+**History** reads and writes the aggregated apiserver
+(`assistant.miloapis.com/v1alpha1`, namespace = project) through the API
+client: list (active and archived), transcript, archive (merge patch) and
+delete. Rename is a service call (`POST /v1alpha1/conversations/rename`). The
+apiserver's `sendmessage` subresource isn't used, because it has no caller
+token.
+
+**Links in answers** that point at portal pages the app has (`/project/:p/alb/:id`,
+workloads, instances, domains, DNS zones, networks, connectors) close Patch
+and open that screen. Anything else, or a link into another project, opens in
+the browser.
+
+Copy isn't offered as a button: the clipboard needs a native module the
+binary doesn't have. **Share** opens the share sheet, which has Copy, and
+answers are selectable.
+
+The assistant core is a new linked package, so after pulling this run
+`pnpm install` and restart Metro once (`metro.config.js` watches it).
 
 ## Assets
 
