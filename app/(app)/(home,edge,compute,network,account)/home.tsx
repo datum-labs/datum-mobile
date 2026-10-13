@@ -4,6 +4,7 @@ import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { PATCH_ICON } from '@/components/assistant/askPatch';
 import { Icon } from '@/components/Icon';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
@@ -171,7 +172,8 @@ export default function Home() {
       <Stack.Screen options={{ title: selection?.projectName ?? 'Home' }} />
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          icon="sparkles"
+          icon={PATCH_ICON}
+          iconRenderingMode="template"
           accessibilityLabel="Ask Patch"
           onPress={() => router.push('/assistant')}
         />

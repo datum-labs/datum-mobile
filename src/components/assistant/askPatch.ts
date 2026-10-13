@@ -1,3 +1,4 @@
+import type { ImageSourcePropType } from 'react-native';
 import { router, type Href } from 'expo-router';
 
 import { MENTION_KINDS, type MentionKind } from '@/resources/assistant/config';
@@ -19,5 +20,16 @@ export function askPatchAbout(kind: MentionKind, name: string, label?: string): 
   } as Href);
 }
 
-/** Toolbar copy shared by every detail screen. */
-export const ASK_PATCH = { icon: 'sparkles', accessibilityLabel: 'Ask Patch about this' } as const;
+/**
+ * Patch's toolbar icon: Lucide's `brain`, the icon the portal's assistant
+ * plugin uses, rendered at toolbar size and drawn as a template image so it
+ * takes the header tint like the SF Symbols beside it.
+ */
+export const PATCH_ICON = require('@/assets/icons/brain.png') as ImageSourcePropType;
+
+/** Toolbar props shared by every detail screen. */
+export const ASK_PATCH = {
+  icon: PATCH_ICON,
+  iconRenderingMode: 'template',
+  accessibilityLabel: 'Ask Patch about this',
+} as const;
