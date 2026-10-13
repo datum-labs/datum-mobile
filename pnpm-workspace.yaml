@@ -1,5 +1,6 @@
 allowBuilds:
   '@parcel/watcher': false
+  esbuild: false
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - '@expo/cli@57.0.29'
