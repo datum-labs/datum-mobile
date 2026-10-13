@@ -1,6 +1,5 @@
 import { Card, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
-import type { SymbolViewProps } from 'expo-symbols';
 import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -12,7 +11,7 @@ import { Section } from '@/components/Section';
 import { NoProjectState } from '@/components/states';
 import { SummaryTile } from '@/components/SummaryTile';
 import { useProjectContext } from '@/context/ProjectContext';
-import type { StatusView } from '@/lib/status/types';
+import { attentionItems } from '@/lib/health/attention';
 import { instanceView, rollup, workloadView } from '@/lib/status/views';
 import { useConnectors } from '@/resources/connectors/queries';
 import { useInstances, useWorkloads } from '@/resources/compute/queries';
@@ -20,15 +19,6 @@ import { useDnsZones } from '@/resources/dns/queries';
 import { useDomains } from '@/resources/domains/queries';
 import { useHttpProxies } from '@/resources/http-proxies/queries';
 import { useNetworks } from '@/resources/networks/queries';
-
-interface AttentionItem {
-  key: string;
-  title: string;
-  subtitle: string;
-  icon: SymbolViewProps['name'];
-  view: StatusView;
-  href: Href;
-}
 
 export default function Home() {
   const t = useDatumTheme();
@@ -116,54 +106,16 @@ export default function Home() {
     [proxies, domains, zones, workloads, instances, networks, connectors]
   );
 
-  const attention = useMemo<AttentionItem[]>(() => {
-    const items: AttentionItem[] = [];
-    const needs = (view: StatusView) => view.status === 'error' || view.status === 'pending';
-    for (const p of proxies.data ?? [])
-      if (needs(p.view))
-        items.push({
-          key: `alb/${p.name}`,
-          title: p.displayName,
-          subtitle: 'Load balancer',
-          icon: 'arrow.triangle.branch',
-          view: p.view,
-          href: `/alb/${encodeURIComponent(p.name)}`,
-        });
-    for (const w of workloads.data ?? []) {
-      const view = workloadView(w);
-      if (needs(view))
-        items.push({
-          key: `wl/${w.name}`,
-          title: w.name,
-          subtitle: 'Workload',
-          icon: 'shippingbox.fill',
-          view,
-          href: `/workloads/${encodeURIComponent(w.name)}`,
-        });
-    }
-    for (const d of domains.data ?? [])
-      if (d.view.status === 'error')
-        items.push({
-          key: `dom/${d.name}`,
-          title: d.domainName,
-          subtitle: 'Domain',
-          icon: 'globe',
-          view: d.view,
-          href: `/domains/${encodeURIComponent(d.name)}`,
-        });
-    for (const z of zones.data ?? [])
-      if (needs(z.view))
-        items.push({
-          key: `dns/${z.name}`,
-          title: z.domainName,
-          subtitle: 'DNS zone',
-          icon: 'list.bullet.rectangle',
-          view: z.view,
-          href: `/dns/${encodeURIComponent(z.name)}`,
-        });
-    const rank = { error: 0, pending: 1, unknown: 2, success: 3 } as const;
-    return items.sort((a, b) => rank[a.view.status] - rank[b.view.status]).slice(0, 6);
-  }, [proxies.data, workloads.data, domains.data, zones.data]);
+  const attention = useMemo(
+    () =>
+      attentionItems({
+        proxies: proxies.data,
+        workloads: workloads.data,
+        domains: domains.data,
+        zones: zones.data,
+      }).slice(0, 6),
+    [proxies.data, workloads.data, domains.data, zones.data]
+  );
 
   const allLoaded = tiles.every((tile) => tile.q.data !== undefined || tile.q.error);
 
@@ -217,7 +169,7 @@ export default function Home() {
                     subtitle={item.subtitle}
                     icon={item.icon}
                     status={item.view}
-                    href={item.href}
+                    href={item.path as Href}
                     zoom={false}
                   />
                 ))
