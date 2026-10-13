@@ -46,7 +46,9 @@ else
   git -C "$WORK" checkout -q FETCH_HEAD
 fi
 
-echo "==> make build-console-wasm ($(go version | cut -d' ' -f3))"
+# The toolchain compute's go.mod selects, not necessarily the one on PATH.
+GO_VERSION=$(cd "$WORK" && go env GOVERSION)
+echo "==> make build-console-wasm ($GO_VERSION)"
 make -C "$WORK" build-console-wasm
 
 mkdir -p "$OUT"
@@ -56,7 +58,6 @@ install -m 0644 "$WORK/bin/console-session-wasm_exec.js" "$OUT/wasm_exec.js"
 RAW=$(wc -c < "$OUT/console-session.wasm" | tr -d ' ')
 GZIP=$(gzip -9c "$OUT/console-session.wasm" | wc -c | tr -d ' ')
 SHA=$(shasum -a 256 "$OUT/console-session.wasm" | cut -d' ' -f1)
-GO_VERSION=$(cd "$WORK" && go env GOVERSION)
 cat > "$OUT/BUILD.json" <<EOF
 {
   "computeCommit": "$COMPUTE_REF",
