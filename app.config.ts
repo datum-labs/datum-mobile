@@ -157,6 +157,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-secure-store',
       'expo-web-browser',
       ['expo-build-properties', { ios: { deploymentTarget: '26.0' } }],
+      // BGTaskScheduler identifier + processing mode for the widgets' background refresh.
+      'expo-background-task',
       './plugins/with-scene-lifecycle',
       // Instance shell: the terminal page and console WASM as bundle files (README "Instance shell").
       './plugins/with-console-assets',
