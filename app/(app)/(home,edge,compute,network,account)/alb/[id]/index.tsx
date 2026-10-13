@@ -2,6 +2,7 @@ import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-clou
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { HostnameLink, openHostname } from '@/components/HostnameLink';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
@@ -151,12 +152,18 @@ export default function AlbDetail() {
   return (
     <>
       <Stack.Screen options={{ title: proxy?.displayName ?? 'Load balancer' }} />
-      {proxy?.canonicalHostname && isOpenableHostname(proxy.canonicalHostname) ? (
+      {id ? (
         <Stack.Toolbar placement="right">
+          {proxy?.canonicalHostname && isOpenableHostname(proxy.canonicalHostname) ? (
+            <Stack.Toolbar.Button
+              icon="safari"
+              accessibilityLabel={`Open ${proxy.canonicalHostname} in your browser`}
+              onPress={() => void openHostname(proxy.canonicalHostname as string)}
+            />
+          ) : null}
           <Stack.Toolbar.Button
-            icon="safari"
-            accessibilityLabel={`Open ${proxy.canonicalHostname} in your browser`}
-            onPress={() => void openHostname(proxy.canonicalHostname as string)}
+            {...ASK_PATCH}
+            onPress={() => askPatchAbout('alb', id, proxy?.displayName)}
           />
         </Stack.Toolbar>
       ) : null}

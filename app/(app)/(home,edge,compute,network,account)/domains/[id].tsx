@@ -2,6 +2,7 @@ import { Card, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-na
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
+import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { Screen } from '@/components/Screen';
@@ -22,6 +23,14 @@ export default function DomainDetail() {
   return (
     <>
       <Stack.Screen options={{ title: domain?.domainName ?? 'Domain' }} />
+      {id ? (
+        <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          {...ASK_PATCH}
+          onPress={() => askPatchAbout('domain', id, domain?.domainName)}
+        />
+        </Stack.Toolbar>
+      ) : null}
       <Screen onRefresh={() => query.refetch()}>
         {!domain ? (
           query.error ? (

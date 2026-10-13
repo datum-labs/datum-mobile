@@ -3,6 +3,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
+import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { Screen } from '@/components/Screen';
@@ -57,6 +58,14 @@ export default function DnsZoneDetail() {
   return (
     <>
       <Stack.Screen options={{ title: zone?.domainName ?? 'DNS zone' }} />
+      {id ? (
+        <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          {...ASK_PATCH}
+          onPress={() => askPatchAbout('dnsZone', id, zone?.domainName)}
+        />
+        </Stack.Toolbar>
+      ) : null}
       <Screen onRefresh={() => Promise.all([zoneQuery.refetch(), records.refetch()])}>
         {!zone ? (
           zoneQuery.error ? (

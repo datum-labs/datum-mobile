@@ -1,5 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 
+import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { ResourceRow } from '@/components/ResourceRow';
@@ -21,6 +22,14 @@ export default function InstanceDetail() {
   return (
     <>
       <Stack.Screen options={{ title: name ?? 'Instance' }} />
+      {name ? (
+        <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          {...ASK_PATCH}
+          onPress={() => askPatchAbout('instance', name)}
+        />
+        </Stack.Toolbar>
+      ) : null}
       <Screen onRefresh={() => query.refetch()}>
         {!instance ? (
           query.error ? (

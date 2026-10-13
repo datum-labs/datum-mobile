@@ -2,6 +2,7 @@ import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-clou
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
 import { ResourceRow } from '@/components/ResourceRow';
@@ -43,6 +44,14 @@ export default function WorkloadDetail() {
   return (
     <>
       <Stack.Screen options={{ title: name ?? 'Workload' }} />
+      {name ? (
+        <Stack.Toolbar placement="right">
+        <Stack.Toolbar.Button
+          {...ASK_PATCH}
+          onPress={() => askPatchAbout('workload', name)}
+        />
+        </Stack.Toolbar>
+      ) : null}
       <Screen
         onRefresh={() =>
           Promise.all([query.refetch(), deployments.refetch(), instances.refetch(), albs.refetch()])
