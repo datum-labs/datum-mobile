@@ -1,7 +1,7 @@
 # Datum for iOS (`datum-mobile`)
 
 A read-only iOS app for Datum Cloud: organizations, projects, ALBs (HTTPProxies),
-domains, DNS, compute workloads and instances, networks, subnets and connectors.
+domains, DNS, compute workloads and instances, networks and connectors.
 Built with Expo SDK 57 / React Native 0.86 (new architecture), Expo Router and
 the system iOS 26 chrome (Liquid Glass tab bar, headers and sheets). Content
 components come from [`@datum-cloud/datum-ui-native`](../datum-ui/packages/native).
@@ -171,7 +171,7 @@ app/
   (app)/home/                 project overview: counts, status rollups, needs-attention
   (app)/edge/                 ALBs · Domains · DNS Zones; alb/[id], domains/[id], dns/[id]
   (app)/compute/              workloads · instances; [workload], instances/[instance]
-  (app)/network/              networks · subnets · connectors; [id] (incl. Connect this iPhone), connectors/[id]
+  (app)/network/              networks · connectors; [id] (incl. Connect this iPhone), connectors/[id]
   (app)/account/              profile, project, switch account, sign out, environment
   console/[instance].tsx      instance shell, full screen over the tabs
   context-switcher.tsx        form sheet: organization → project

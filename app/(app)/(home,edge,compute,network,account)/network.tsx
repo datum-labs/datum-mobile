@@ -8,11 +8,10 @@ import { NoProjectState, QueryView } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { useSegment } from '@/hooks/useSegment';
 import { useConnectors } from '@/resources/connectors/queries';
-import { useNetworks, useSubnets } from '@/resources/networks/queries';
+import { useNetworks } from '@/resources/networks/queries';
 
 const SEGMENTS = [
   { value: 'networks', label: 'Networks' },
-  { value: 'subnets', label: 'Subnets' },
   { value: 'connectors', label: 'Connectors' },
 ] as const;
 type Segment = (typeof SEGMENTS)[number]['value'];
@@ -24,9 +23,8 @@ export default function NetworkIndex() {
     'networks'
   );
   const networks = useNetworks(projectId);
-  const subnets = useSubnets(projectId);
   const connectors = useConnectors(projectId);
-  const active = segment === 'networks' ? networks : segment === 'subnets' ? subnets : connectors;
+  const active = segment === 'networks' ? networks : connectors;
 
   return (
     <>
@@ -54,28 +52,6 @@ export default function NetworkIndex() {
                     meta={n.ipv4Range ?? n.ipv6Range ?? n.ipv6Prefix}
                     status={n.view}
                     href={`/networks/${encodeURIComponent(n.name)}`}
-                  />
-                ))}
-              </View>
-            )}
-          </QueryView>
-        ) : segment === 'subnets' ? (
-          <QueryView
-            query={subnets}
-            isEmpty={(d) => d.length === 0}
-            empty={{ title: 'No subnets', description: 'Subnets are allocated per location as workloads deploy.' }}>
-            {(items) => (
-              <View style={{ gap: 8 }}>
-                {items.map((s, i) => (
-                  <ResourceRow
-                    key={s.uid}
-                    index={i}
-                    icon="square.split.bottomrightquarter"
-                    title={s.name}
-                    subtitle={[s.network, s.location].filter(Boolean).join(' · ')}
-                    meta={s.cidr}
-                    status={s.view}
-                    href={s.network ? `/networks/${encodeURIComponent(s.network)}` : undefined}
                   />
                 ))}
               </View>

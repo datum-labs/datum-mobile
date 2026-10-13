@@ -9,7 +9,6 @@ export type {
   ComDatumapisNetworkingV1AlphaHttpProxy as RawHttpProxy,
   ComDatumapisNetworkingV1AlphaNetwork as RawNetwork,
   ComDatumapisNetworkingV1AlphaNetworkService as RawNetworkService,
-  ComDatumapisNetworkingV1AlphaSubnet as RawSubnet,
   ComDatumapisNetworkingV1AlphaTrafficProtectionPolicy as RawTrafficProtectionPolicy,
 } from './generated/networking/types.gen';
 export type { ComDatumapisNetworkingV1Alpha1Connector as RawConnector } from './generated/networking-alpha1/types.gen';

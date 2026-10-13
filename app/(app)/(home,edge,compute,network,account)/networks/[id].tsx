@@ -3,26 +3,23 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { ConnectDeviceSection } from '@/components/ConnectDeviceSection';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
-import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
 import { ErrorState, RowSkeletons } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { formatDate } from '@/lib/format';
-import { useNetwork, useSubnets } from '@/resources/networks/queries';
+import { useNetwork } from '@/resources/networks/queries';
 
 export default function NetworkDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const projectId = useProjectId();
   const query = useNetwork(projectId, id);
-  const subnets = useSubnets(projectId);
   const network = query.data;
-  const own = (subnets.data ?? []).filter((s) => s.network === id);
 
   return (
     <>
       <Stack.Screen options={{ title: network?.displayName ?? 'Network' }} />
-      <Screen onRefresh={() => Promise.all([query.refetch(), subnets.refetch()])}>
+      <Screen onRefresh={() => query.refetch()}>
         {!network ? (
           query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.refetch()} />
@@ -53,20 +50,6 @@ export default function NetworkDetail() {
                 ]}
               />
             </Section>
-            {own.length > 0 ? (
-              <Section title="Subnets">
-                {own.map((s, i) => (
-                  <ResourceRow
-                    key={s.uid}
-                    index={i}
-                    icon="square.split.bottomrightquarter"
-                    title={s.cidr ?? s.name}
-                    subtitle={[s.location, s.subnetClass].filter(Boolean).join(' · ')}
-                    status={s.view}
-                  />
-                ))}
-              </Section>
-            ) : null}
             <Section title="Conditions">
               <ConditionsCard conditions={network.conditions} />
             </Section>
