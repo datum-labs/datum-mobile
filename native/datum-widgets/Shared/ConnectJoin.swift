@@ -103,14 +103,14 @@ enum JoinCheck {
   /// Why the binding no longer backs the saved tunnel, or nil when it does.
   /// `gateway` is only needed when the binding doesn't carry the endpoint ID.
   static func bindingProblem(_ binding: [String: Any]?, gateway: [String: Any]?, join: TunnelJoin) -> String? {
-    guard let binding else { return "This iPhone left the network." }
+    guard let binding else { return "This device left the network." }
     if (binding["metadata"] as? [String: Any])?["deletionTimestamp"] != nil {
-      return "This iPhone is leaving the network."
+      return "This device is leaving the network."
     }
     let spec = binding["spec"] as? [String: Any] ?? [:]
     guard spec["connectorRef"] as? String == join.connectorName, spec["gatewayRef"] as? String == join.gatewayName
     else { return "The network binding changed." }
-    guard currentCondition(binding, "Accepted") else { return "The network hasn't accepted this iPhone." }
+    guard currentCondition(binding, "Accepted") else { return "The network hasn't accepted this device." }
     let status = binding["status"] as? [String: Any] ?? [:]
     guard status["assignedAddress"] as? String == join.clientAddress,
       status["peerAddress"] as? String == join.gatewayAddress
@@ -132,13 +132,13 @@ enum JoinCheck {
 
   /// Deleting the Connector is the revocation boundary (as for the daemon).
   static func connectorProblem(_ connector: [String: Any]?, join: TunnelJoin) -> String? {
-    guard let connector else { return "This iPhone's Connector was deleted." }
+    guard let connector else { return "This device's Connector was deleted." }
     if (connector["metadata"] as? [String: Any])?["deletionTimestamp"] != nil {
-      return "This iPhone's Connector is being deleted."
+      return "This device's Connector is being deleted."
     }
     let spec = connector["spec"] as? [String: Any] ?? [:]
     guard spec["publicKey"] as? String == join.publicKey else {
-      return "This iPhone's Connector belongs to another device."
+      return "This Connector belongs to another device."
     }
     return nil
   }

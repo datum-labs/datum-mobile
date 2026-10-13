@@ -93,10 +93,10 @@ enum VPCResume {
 
   /// Can the saved tunnel be restarted as is?
   static func check(_ join: TunnelJoin, now: Date = Date()) async -> Verdict {
-    guard VPCKeychain.hasConnectorKey(join) else { return .reconnect("This iPhone's Connector key is missing.") }
+    guard VPCKeychain.hasConnectorKey(join) else { return .reconnect("This device's Connector key is missing.") }
     let token = VPCKeychain.accessToken
     guard let token, JoinCheck.tokenUsable(token, at: now) else {
-      return .reconnect("Open Datum to check this iPhone can still join.")
+      return .reconnect("Open Datum to check this device can still join.")
     }
     let session = URLSession(configuration: .ephemeral)
     defer { session.finishTasksAndInvalidate() }
@@ -133,7 +133,7 @@ enum VPCResume {
 struct ConnectVPCIntent: SetValueIntent {
   static let title: LocalizedStringResource = "Connect to VPC"
   static let description = IntentDescription(
-    "Turns the Datum Connect tunnel to the VPC this iPhone joined last on or off.")
+    "Turns the Datum Connect tunnel to the VPC you joined last on or off.")
 
   @Parameter(title: "Connected")
   var value: Bool
@@ -143,7 +143,7 @@ struct ConnectVPCIntent: SetValueIntent {
   func perform() async throws -> some IntentResult {
     defer { ControlCenter.shared.reloadControls(ofKind: VPCControl.kind) }
     guard let manager = try? await VPCControl.manager(), let join = VPCControl.join(of: manager) else {
-      // Never connected on this iPhone (or the configuration was removed).
+      // Never connected on this device (or the configuration was removed).
       return .result(opensIntent: OpenDatumRouteIntent(route: "/(network)/network?segment=networks"))
     }
     if !value {

@@ -127,7 +127,7 @@ struct AskPatchControl: ControlWidget {
         }
       }
       .displayName("Connect to VPC")
-      .description("Datum Connect: this iPhone's tunnel to the VPC it joined last.")
+      .description("Datum Connect: your tunnel to the VPC you joined last.")
     }
   }
 #endif
