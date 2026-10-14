@@ -66,13 +66,13 @@ const humanActivity: RawActivity = {
 describe('ActivityQuery request', () => {
   test('locks the filter to the resource kind and a name substring, like the portal', () => {
     expect(buildResourceActivityFilter(TARGET)).toBe(
-      'spec.resource.kind == "HTTPProxy" && spec.resource.name.contains("health-checks-xnffa7")'
+      'spec.resource.kind == "HTTPProxy" && spec.resource.name.contains("health-checks-xnffa7") && spec.changeSource == "human"'
     );
   });
 
   test('escapes quotes and backslashes in CEL string literals', () => {
     expect(buildResourceActivityFilter({ kind: 'HTTPProxy', name: 'a"b\\c' })).toBe(
-      'spec.resource.kind == "HTTPProxy" && spec.resource.name.contains("a\\"b\\\\c")'
+      'spec.resource.kind == "HTTPProxy" && spec.resource.name.contains("a\\"b\\\\c") && spec.changeSource == "human"'
     );
   });
 
@@ -84,7 +84,7 @@ describe('ActivityQuery request', () => {
         startTime: 'now-7d',
         endTime: 'now',
         limit: 30,
-        filter: 'spec.resource.kind == "HTTPProxy" && spec.resource.name.contains("health-checks-xnffa7")',
+        filter: 'spec.resource.kind == "HTTPProxy" && spec.resource.name.contains("health-checks-xnffa7") && spec.changeSource == "human"',
       },
     });
   });

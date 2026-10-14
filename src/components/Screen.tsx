@@ -1,11 +1,17 @@
 import { useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { useCallback, useState, type ReactNode } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, type ScrollViewProps } from 'react-native';
+import { RefreshControl, StyleSheet, type ScrollViewProps } from 'react-native';
+import Animated, { type AnimatedRef, type ScrollHandlerProcessed } from 'react-native-reanimated';
 
-type Props = Omit<ScrollViewProps, 'refreshControl'> & {
+type Props = Omit<ScrollViewProps, 'refreshControl' | 'onScroll'> & {
   children: ReactNode;
   /** Pull-to-refresh: resolves when every refetch settles. */
   onRefresh?: () => Promise<unknown>;
+  /** Pull-to-refresh spinner colour (e.g. light over Home's artwork). */
+  refreshTint?: string;
+  /** For scroll-driven animations (`useScrollViewOffset`, `useAnimatedScrollHandler`). */
+  scrollRef?: AnimatedRef<Animated.ScrollView>;
+  onScroll?: ScrollHandlerProcessed<Record<string, unknown>>;
 };
 
 /**
@@ -13,7 +19,16 @@ type Props = Omit<ScrollViewProps, 'refreshControl'> & {
  * header. `contentInsetAdjustmentBehavior="automatic"` lets UIKit inset the
  * content below the header and above the tab bar so titles collapse natively.
  */
-export function Screen({ children, onRefresh, contentContainerStyle, style, ...rest }: Props) {
+export function Screen({
+  children,
+  onRefresh,
+  refreshTint,
+  scrollRef,
+  onScroll,
+  contentContainerStyle,
+  style,
+  ...rest
+}: Props) {
   const t = useDatumTheme();
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = useCallback(async () => {
@@ -27,7 +42,10 @@ export function Screen({ children, onRefresh, contentContainerStyle, style, ...r
   }, [onRefresh]);
 
   return (
-    <ScrollView
+    <Animated.ScrollView
+      ref={scrollRef}
+      onScroll={onScroll}
+      scrollEventThrottle={16}
       contentInsetAdjustmentBehavior="automatic"
       automaticallyAdjustsScrollIndicatorInsets
       keyboardDismissMode="on-drag"
@@ -38,13 +56,13 @@ export function Screen({ children, onRefresh, contentContainerStyle, style, ...r
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={t.colors.primary}
+            tintColor={refreshTint ?? t.colors.primary}
           />
         ) : undefined
       }
       {...rest}>
       {children}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 

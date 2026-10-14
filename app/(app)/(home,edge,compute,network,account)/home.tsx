@@ -1,9 +1,20 @@
 import { Card, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
-import { useEffect, useMemo, useRef } from 'react';
+import { router, Stack, useIsFocused, useLocalSearchParams, type Href } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedRef,
+  useDerivedValue,
+  useScrollViewOffset,
+} from 'react-native-reanimated';
+import type Animated from 'react-native-reanimated';
 import { StyleSheet, View } from 'react-native';
 
 import { PATCH_ICON } from '@/components/assistant/askPatch';
+import { HomeHero, type HomeHeroSummary } from '@/components/HomeHero';
 import { HomeNetworks } from '@/components/HomeNetworks';
 import { Icon } from '@/components/Icon';
 import { ResourceRow } from '@/components/ResourceRow';
@@ -109,6 +120,31 @@ export default function Home() {
 
   const allLoaded = tiles.every((tile) => tile.q.data !== undefined || tile.q.error);
 
+  // Artwork header: the hero scrolls under the transparent bar; once it's
+  // gone, the project name moves into the bar and the status bar goes dark.
+  const headerHeight = useHeaderHeight();
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const offset = useScrollViewOffset(scrollRef);
+  const scrollY = useDerivedValue(() => offset.value + headerHeight);
+  const [collapsed, setCollapsed] = useState(false);
+  useAnimatedReaction(
+    () => scrollY.value > 120,
+    (next, prev) => {
+      if (next !== prev) runOnJS(setCollapsed)(next);
+    }
+  );
+  const focused = useIsFocused();
+  const onArt = !!projectId && !collapsed;
+  const heroSummary: HomeHeroSummary | undefined =
+    attention.length > 0
+      ? {
+          tone: attention.some((item) => item.view.status === 'error') ? 'error' : 'warning',
+          label: `${attention.length} ${attention.length === 1 ? 'needs' : 'need'} attention`,
+        }
+      : allLoaded
+        ? { tone: 'success', label: 'All healthy' }
+        : undefined;
+
   // The widgets show what Home shows.
   usePublishProjectHealth(
     selection,
@@ -118,21 +154,32 @@ export default function Home() {
 
   return (
     <>
-      <Stack.Screen options={{ title: selection?.projectName ?? 'Home' }} />
+      <Stack.Screen
+        options={{
+          title: projectId && !collapsed ? '' : (selection?.projectName ?? 'Home'),
+          // The hero carries the big title.
+          headerLargeTitle: !projectId,
+        }}
+      />
+      {focused && onArt ? <StatusBar style="light" /> : null}
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
           icon={PATCH_ICON}
           iconRenderingMode="template"
           accessibilityLabel="Ask Patch"
+          tintColor={onArt ? '#fff' : undefined}
           onPress={() => router.push('/assistant')}
         />
         <Stack.Toolbar.Button
           icon="arrow.left.arrow.right"
           accessibilityLabel="Switch project"
+          tintColor={onArt ? '#fff' : undefined}
           onPress={() => router.push('/context-switcher')}
         />
       </Stack.Toolbar>
       <Screen
+        scrollRef={scrollRef}
+        refreshTint={onArt ? '#fff' : undefined}
         onRefresh={projectId ? () => Promise.all([networks.refetch(), ...tiles.map((tile) => tile.q.refetch())]) : undefined}>
         {!projectId ? (
           hydrated ? (
@@ -140,6 +187,13 @@ export default function Home() {
           ) : null
         ) : (
           <>
+            <HomeHero
+              title={selection?.projectName ?? projectId}
+              subtitle={selection?.orgName}
+              summary={heroSummary}
+              headerHeight={headerHeight}
+              scrollY={scrollY}
+            />
             <HomeNetworks projectId={projectId} />
             <View style={styles.grid}>
               {tiles.map((tile, i) => (

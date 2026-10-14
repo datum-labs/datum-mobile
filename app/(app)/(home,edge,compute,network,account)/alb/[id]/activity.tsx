@@ -13,16 +13,13 @@ import { activityUnavailableReason, useResourceActivity } from '@/resources/acti
 import type { ActivityItem } from '@/resources/activity/service';
 import { useHttpProxy } from '@/resources/http-proxies/queries';
 
-const CHANGE_SOURCE_LABEL = { human: 'Human', system: 'System' } as const;
-
-/** Summary with link targets in semibold; then who did it, how, and when. */
+/** Summary with link targets in semibold; then who did it (if the summary doesn't say) and when. */
 const ActivityRow = memo(function ActivityRow({ item }: { item: ActivityItem }) {
   const t = useDatumTheme();
   const system = item.changeSource === 'system' || item.actorType === 'controller';
-  const source = item.changeSource ? CHANGE_SOURCE_LABEL[item.changeSource] : undefined;
   // People's summaries already start with who did it ("alice@… enabled …").
   const named = !!item.actor && item.summary.includes(item.actor);
-  const byline = [named ? undefined : `by ${item.actor}`, source].filter(Boolean).join(' · ');
+  const byline = named || !item.actor ? '' : `by ${item.actor}`;
   return (
     <View
       style={styles.row}
@@ -71,8 +68,8 @@ export default function AlbActivity() {
   ) : items ? (
     items.length === 0 ? (
       <EmptyState
-        title="No activity in the last 7 days"
-        description="Changes to this load balancer, by people or by Datum, will show up here."
+        title="No changes in the last 7 days"
+        description="Changes people make to this load balancer show up here."
       />
     ) : null
   ) : unavailable === 'forbidden' ? (

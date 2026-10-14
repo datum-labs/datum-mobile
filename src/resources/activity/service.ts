@@ -87,11 +87,13 @@ export function celEscape(value: string): string {
 }
 
 /**
- * The portal's locked kind + name filter. Name is a substring match, as in
+ * The portal's locked kind + name filter, limited to changes people made:
+ * system activity (controllers reporting "is live", "failed to program", …)
+ * is left out, so pages fill with edits. Name is a substring match, as in
  * activity-ui (`spec.resource.name.contains`).
  */
 export function buildResourceActivityFilter({ kind, name }: ResourceActivityTarget): string {
-  return `spec.resource.kind == "${celEscape(kind)}" && spec.resource.name.contains("${celEscape(name)}")`;
+  return `spec.resource.kind == "${celEscape(kind)}" && spec.resource.name.contains("${celEscape(name)}") && spec.changeSource == "human"`;
 }
 
 export function buildResourceActivityQuery(
