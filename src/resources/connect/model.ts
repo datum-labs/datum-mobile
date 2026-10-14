@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import type { BadgeStatus } from '@/lib/status/types';
 
 import type { JoinResult, JoinStage } from './control-plane';
@@ -145,6 +146,13 @@ export function isActive(status: VpnState['status'] | undefined): boolean {
 
 /** Copy for a build or device that can't run the tunnel. */
 export function unavailableCopy(availability: VpnAvailability): { title: string; description: string } {
+  if (Platform.OS === 'android') {
+    return {
+      title: 'Coming to Android',
+      description:
+        'Connecting a phone to a VPC is iPhone-only for now. The Android version of the Datum Connect tunnel is on its way.',
+    };
+  }
   if (availability.reason === 'simulator') {
     return {
       title: 'Not available in the Simulator',

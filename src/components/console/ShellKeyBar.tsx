@@ -131,7 +131,7 @@ export function ShellKeyBar({
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={keyboardShown ? 'Hide keyboard' : 'Show keyboard'}
-        hitSlop={8}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         onPress={() => {
           tap();
           onToggleKeyboard();

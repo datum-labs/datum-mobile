@@ -47,6 +47,7 @@ import {
   useProxyDescription,
   useProxyWaf,
 } from '@/resources/http-proxies/queries';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 function certView(status: HostnameStatusLike | undefined): StatusView {
   const condition = getCertificateReadyCondition(status);
@@ -176,6 +177,7 @@ function originTlsLabel(tls: OriginTls | undefined): string | undefined {
 }
 
 export default function AlbDetail() {
+  const toolbarIcon = useToolbarIcon();
   const { id } = useLocalSearchParams<{ id: string }>();
   const projectId = useProjectId();
   const query = useHttpProxy(projectId, id);
@@ -196,7 +198,7 @@ export default function AlbDetail() {
         <Stack.Toolbar placement="right">
           {proxy?.canonicalHostname && isOpenableHostname(proxy.canonicalHostname) ? (
             <Stack.Toolbar.Button
-              icon="safari"
+              icon={toolbarIcon('safari')}
               accessibilityLabel={`Open ${proxy.canonicalHostname} in your browser`}
               onPress={() => void openHostname(proxy.canonicalHostname as string)}
             />

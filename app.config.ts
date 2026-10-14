@@ -122,7 +122,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     scheme: v.scheme,
     userInterfaceStyle: 'automatic',
     backgroundColor: NAVY,
-    platforms: ['ios'],
+    platforms: ['ios', 'android'],
     icon: './assets/icon/icon-1024.png',
     ios: {
       bundleIdentifier,
@@ -142,6 +142,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         // Connect doesn't ask on every TestFlight build.
         ITSAppUsesNonExemptEncryption: false,
       },
+    },
+    android: {
+      // Same id and URL scheme as iOS, so the staging OIDC redirect
+      // (net.datum.cloud.staging:/oauth/callback) works unchanged.
+      package: process.env.ANDROID_PACKAGE || v.bundleIdentifier,
+      ...(process.env.ANDROID_VERSION_CODE ? { versionCode: Number(process.env.ANDROID_VERSION_CODE) } : {}),
+      adaptiveIcon: {
+        foregroundImage: './assets/icon/android/foreground.png',
+        monochromeImage: './assets/icon/android/foreground.png',
+        backgroundColor: NAVY,
+      },
+      predictiveBackGestureEnabled: true,
     },
     plugins: [
       'expo-router',

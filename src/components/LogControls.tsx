@@ -6,6 +6,7 @@ import type { LogControls } from '@/hooks/useLogControls';
 import { LOG_RANGE_PRESETS, logRangePreset, type LogRangeKey } from '@/lib/logs';
 
 import { EmptyState } from './states';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 /**
  * Native header controls for a log screen: a time-range menu, a Live toggle
@@ -21,12 +22,13 @@ export function LogHeaderControls({
   /** No controls when there's nothing to control (no access). */
   hidden?: boolean;
 }) {
+  const toolbarIcon = useToolbarIcon();
   const { range, setRange, live, setLive, setSearch } = controls;
   if (hidden) return null;
   return (
     <>
       <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Menu icon="clock" accessibilityLabel="Time range" title="Time range">
+        <Stack.Toolbar.Menu icon={toolbarIcon('clock')} accessibilityLabel="Time range" title="Time range">
           {LOG_RANGE_PRESETS.map((preset) => (
             <Stack.Toolbar.MenuAction
               key={preset.key}
@@ -37,7 +39,7 @@ export function LogHeaderControls({
           ))}
         </Stack.Toolbar.Menu>
         <Stack.Toolbar.Button
-          icon={live ? 'pause.fill' : 'play.fill'}
+          icon={toolbarIcon(live ? 'pause.fill' : 'play.fill')}
           accessibilityLabel={live ? 'Stop live updates' : 'Start live updates'}
           onPress={() => {
             impactHaptic('light');

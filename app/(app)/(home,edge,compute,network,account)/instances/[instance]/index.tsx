@@ -13,8 +13,10 @@ import { instanceView } from '@/lib/status/views';
 import { useInstance } from '@/resources/compute/queries';
 import { useShellAvailable } from '@/resources/console/queries';
 import { toConditions } from '@/resources/shared';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 export default function InstanceDetail() {
+  const toolbarIcon = useToolbarIcon();
   const { instance: name } = useLocalSearchParams<{ instance: string }>();
   const projectId = useProjectId();
   const query = useInstance(projectId, name);
@@ -27,7 +29,7 @@ export default function InstanceDetail() {
       {name ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button
-            icon="terminal"
+            icon={toolbarIcon('terminal')}
             accessibilityLabel="Open shell"
             hidden={!canOpenShell}
             onPress={() =>

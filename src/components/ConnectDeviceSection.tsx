@@ -2,7 +2,7 @@ import { Button, Card, CardContent, StatusBadge, Text, useDatumTheme } from '@da
 import { Host, Toggle } from '@expo/ui/swift-ui';
 import { disabled } from '@expo/ui/swift-ui/modifiers';
 import { useEffect, useRef } from 'react';
-import { Alert, View } from 'react-native';
+import { Alert, Platform, View } from 'react-native';
 
 import { unavailableCopy } from '@/resources/connect/model';
 import { useConnectThisDevice } from '@/resources/connect/queries';
@@ -19,6 +19,8 @@ import { Section } from './Section';
  * `autoConnect` (a network just created in the app) joins as soon as the
  * network is Ready, i.e. has its IPv6 prefix, which the gateway routes.
  */
+const SECTION_TITLE = Platform.OS === 'android' ? 'Connect this phone' : 'Connect this iPhone';
+
 export function ConnectDeviceSection({
   project,
   network,
@@ -50,7 +52,7 @@ export function ConnectDeviceSection({
   if (view.phase === 'unavailable') {
     const copy = unavailableCopy(device.availability);
     return (
-      <Section title="Connect this iPhone">
+      <Section title={SECTION_TITLE}>
         <Notice kind="info" icon="iphone.gen3.radiowaves.left.and.right" title={copy.title} description={copy.description} />
       </Section>
     );
@@ -78,7 +80,7 @@ export function ConnectDeviceSection({
   const gated = device.errorCode === 'activation_approval_required';
 
   return (
-    <Section title="Connect this iPhone">
+    <Section title={SECTION_TITLE}>
       <Card size="sm">
         <CardContent style={{ gap: 10 }}>
           <Host matchContents={{ vertical: true }} style={{ alignSelf: 'stretch' }}>

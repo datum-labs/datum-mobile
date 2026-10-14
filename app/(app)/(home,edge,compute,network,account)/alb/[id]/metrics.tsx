@@ -182,6 +182,7 @@ export default function AlbMetrics() {
                       height={150}
                       type="line"
                       timeAxis
+                      formatValue={formatMs}
                     />
                   ) : (
                     <Text size="sm" tone="muted">

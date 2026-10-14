@@ -104,6 +104,7 @@ export function ComputeMetricsScreen({
                       color={t.colors.info}
                       height={140}
                       timeAxis
+                      formatValue={formatCores}
                     />
                   ) : null}
                   <MetricLegend
@@ -121,6 +122,7 @@ export function ComputeMetricsScreen({
                       color={t.colors.primary}
                       height={140}
                       timeAxis
+                      formatValue={formatBytes}
                     />
                   ) : null}
                   <MetricLegend

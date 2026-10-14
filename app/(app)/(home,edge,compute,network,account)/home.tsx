@@ -11,7 +11,7 @@ import {
   useScrollViewOffset,
 } from 'react-native-reanimated';
 import type Animated from 'react-native-reanimated';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { PATCH_ICON } from '@/components/assistant/askPatch';
 import { HomeHero, HomeHeroPanel, type HomeHeroSummary } from '@/components/HomeHero';
@@ -32,8 +32,10 @@ import { useDnsZones } from '@/resources/dns/queries';
 import { useDomains } from '@/resources/domains/queries';
 import { useHttpProxies } from '@/resources/http-proxies/queries';
 import { useNetworks } from '@/resources/networks/queries';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 export default function Home() {
+  const toolbarIcon = useToolbarIcon();
   const t = useDatumTheme();
   const { selection, hydrated } = useProjectContext();
   const projectId = selection?.projectId;
@@ -125,7 +127,9 @@ export default function Home() {
   const headerHeight = useHeaderHeight();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const offset = useScrollViewOffset(scrollRef);
-  const scrollY = useDerivedValue(() => offset.value + headerHeight);
+  // 0 at rest: iOS rests at -headerHeight (content inset); Android at 0 (padding).
+  const restOffset = Platform.OS === 'ios' ? headerHeight : 0;
+  const scrollY = useDerivedValue(() => offset.value + restOffset);
   const [collapsed, setCollapsed] = useState(false);
   useAnimatedReaction(
     () => scrollY.value > 120,
@@ -159,6 +163,11 @@ export default function Home() {
           title: projectId && !collapsed ? '' : (selection?.projectName ?? 'Home'),
           // The hero carries the big title.
           headerLargeTitle: !projectId,
+          // Android's bar is opaque elsewhere; clear while it's over the artwork.
+          // (Set both ways: dropping the option wouldn't restore the default.)
+          ...(Platform.OS === 'android'
+            ? { headerStyle: { backgroundColor: onArt ? 'transparent' : t.colors.background } }
+            : {}),
         }}
       />
       {focused && onArt ? <StatusBar style="light" /> : null}
@@ -171,7 +180,7 @@ export default function Home() {
           onPress={() => router.push('/assistant')}
         />
         <Stack.Toolbar.Button
-          icon="arrow.left.arrow.right"
+          icon={toolbarIcon('arrow.left.arrow.right')}
           accessibilityLabel="Switch project"
           tintColor={onArt ? '#fff' : undefined}
           onPress={() => router.push('/context-switcher')}

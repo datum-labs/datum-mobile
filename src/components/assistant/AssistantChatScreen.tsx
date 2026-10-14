@@ -38,6 +38,7 @@ import {
 } from '@/resources/assistant/config';
 import { resolveAnswerLink } from '@/resources/assistant/links';
 import { Button } from '@datum-cloud/datum-ui-native';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 /** Route params: `chat` opens a stored conversation; `mention*` prefill a resource ("Ask Patch about this"). */
 export type AssistantChatParams = {
@@ -93,7 +94,7 @@ function MentionChip({ label, kind, onRemove }: { label: string; kind: string; o
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`Don't ask about ${label}`}
-          hitSlop={10}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           onPress={onRemove}>
           <Icon name="xmark.circle.fill" size={14} color={t.colors.mutedForeground} />
         </Pressable>
@@ -108,6 +109,7 @@ function MentionChip({ label, kind, onRemove }: { label: string; kind: string; o
  * from Home, and from "Ask Patch about this" with the resource as a mention.
  */
 export function AssistantChatScreen() {
+  const toolbarIcon = useToolbarIcon();
   const t = useDatumTheme();
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -245,11 +247,11 @@ export function AssistantChatScreen() {
     <>
       <Stack.Screen options={{ title }} />
       <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button icon="xmark" accessibilityLabel="Close" onPress={() => router.back()} />
+        <Stack.Toolbar.Button icon={toolbarIcon('xmark')} accessibilityLabel="Close" onPress={() => router.back()} />
       </Stack.Toolbar>
       <Stack.Toolbar placement="right">
         <Stack.Toolbar.Button
-          icon="clock.arrow.circlepath"
+          icon={toolbarIcon('clock.arrow.circlepath')}
           accessibilityLabel="Chat history"
           disabled={!projectId}
           onPress={() =>
@@ -257,7 +259,7 @@ export function AssistantChatScreen() {
           }
         />
         <Stack.Toolbar.Button
-          icon="square.and.pencil"
+          icon={toolbarIcon('square.and.pencil')}
           accessibilityLabel="New chat"
           disabled={!projectId || (empty && !mention)}
           onPress={startNewChat}

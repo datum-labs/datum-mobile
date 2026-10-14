@@ -1,6 +1,7 @@
 import { useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { DarkTheme, DefaultTheme, ThemeProvider, type Theme } from 'expo-router';
 import type { ReactNode } from 'react';
+import { Platform } from 'react-native';
 import { useMemo } from 'react';
 
 /** Feeds the Datum palette to the native navigation chrome (headers, tab bar, sheets). */
@@ -54,6 +55,9 @@ export function useStackScreenOptions(largeTitleRoutes: ReadonlySet<string> = TA
       headerTitleStyle: { fontFamily: t.fonts.sans.semibold, color: t.colors.foreground },
       headerBackButtonDisplayMode: 'minimal' as const,
       contentStyle: { backgroundColor: t.colors.background },
+      // iOS gives the transparent bar a glass scroll-edge background; Android
+      // has none, so its (still overlaid) bar is an opaque Material top app bar.
+      ...(Platform.OS === 'android' ? { headerStyle: { backgroundColor: t.colors.background } } : {}),
     };
     return ({ route }: { route: { name: string } }) => ({
       ...base,

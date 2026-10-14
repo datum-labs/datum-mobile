@@ -2,7 +2,7 @@ import { StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Link } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 
 import type { StatusView } from '@/lib/status/types';
 
@@ -32,8 +32,7 @@ export function DetailHeader({
   children?: ReactNode;
 }) {
   const t = useDatumTheme();
-  return (
-    <Link.AppleZoomTarget>
+  const header = (
       <View
         collapsable={false}
         accessibilityLabel={title}
@@ -60,8 +59,9 @@ export function DetailHeader({
         ) : null}
         {children}
       </View>
-    </Link.AppleZoomTarget>
   );
+  // Zoom transitions are iOS-only; Android just shows the header.
+  return Platform.OS === 'ios' ? <Link.AppleZoomTarget>{header}</Link.AppleZoomTarget> : header;
 }
 
 const styles = StyleSheet.create({

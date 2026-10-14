@@ -20,6 +20,7 @@ import {
   type AccessLogEntry,
 } from '@/lib/logs';
 import { isLogsForbidden, useAlbLogEntry } from '@/resources/logs/queries';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 /** Plain-text copy of the whole entry for the share sheet (which offers Copy). */
 function entryAsText(entry: AccessLogEntry): string {
@@ -97,6 +98,7 @@ function EntryHeader({ entry }: { entry: AccessLogEntry }) {
 }
 
 export default function AccessLogEntryScreen() {
+  const toolbarIcon = useToolbarIcon();
   const { id, entry: timestampNs, rid } = useLocalSearchParams<{ id: string; entry: string; rid?: string }>();
   const projectId = useProjectId();
   const query = useAlbLogEntry(projectId, id, timestampNs, rid);
@@ -111,7 +113,7 @@ export default function AccessLogEntryScreen() {
       {entry ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button
-            icon="square.and.arrow.up"
+            icon={toolbarIcon('square.and.arrow.up')}
             accessibilityLabel="Share or copy this request"
             onPress={() => void Share.share({ message: entryAsText(entry) })}
           />

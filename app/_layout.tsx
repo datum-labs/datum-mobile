@@ -2,6 +2,7 @@ import { datumFonts, DatumThemeProvider, useDatumTheme } from '@datum-cloud/datu
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
+import { Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -23,11 +24,16 @@ import {
 // Defines the widgets' background refresh task at startup (a no-op without its native modules).
 import { cancelWidgetRefresh } from '@/resources/widgets/background';
 import { clearHealth } from '@/resources/widgets/service';
+import { preloadToolbarIcons } from '@/lib/icons/toolbar';
 
 // Keep the native splash up until the JS splash has painted an identical frame.
 void SplashScreen.preventAutoHideAsync();
 
 export { ErrorBoundary } from 'expo-router';
+
+/** iOS form sheets get the system Liquid Glass; Android sheets need a surface. */
+const SHEET_BACKGROUND = (t: ReturnType<typeof useDatumTheme>) =>
+  Platform.OS === 'ios' ? 'transparent' : t.colors.background;
 
 function RootStack() {
   const { state, emailNotVerified } = useAuth();
@@ -71,7 +77,7 @@ function RootStack() {
             sheetGrabberVisible: true,
             headerShown: false,
             animation: 'default',
-            contentStyle: { backgroundColor: 'transparent' },
+            contentStyle: { backgroundColor: SHEET_BACKGROUND(t) },
           }}
         />
         {/* Create a private network: from Home and the Network tab. */}
@@ -85,7 +91,7 @@ function RootStack() {
             headerTransparent: true,
             headerShadowVisible: false,
             animation: 'default',
-            contentStyle: { backgroundColor: 'transparent' },
+            contentStyle: { backgroundColor: SHEET_BACKGROUND(t) },
           }}
         />
       </Stack.Protected>
@@ -123,6 +129,9 @@ function SplashGate({ cacheRestored }: { cacheRestored: boolean }) {
   if (done) return null;
   return <AnimatedSplash ready={ready} onDone={onDone} />;
 }
+
+// Android header icons are Material Symbols rendered to images; start now (see lib/icons/toolbar).
+preloadToolbarIcons();
 
 export default function RootLayout() {
   const [cacheRestored, setCacheRestored] = useState(false);

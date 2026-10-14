@@ -27,6 +27,7 @@ import { consoleService } from '@/resources/console/service';
 
 import { ShellKeyBar } from './ShellKeyBar';
 import { ShellTerminal, useTerminalBridge } from './ShellTerminal';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 /** Route params: `command` picks the shell; `devRun`/`devKeyboard` are DEV ONLY (headless runs). */
 export type InstanceShellParams = {
@@ -103,6 +104,7 @@ function Unavailable({ title, description }: { title: string; description: strin
  * in the header. Closing it (or leaving) deletes the session.
  */
 export function InstanceShellScreen() {
+  const toolbarIcon = useToolbarIcon();
   const params = useLocalSearchParams<InstanceShellParams>();
   const name = params.instance;
   const projectId = useProjectId();
@@ -115,7 +117,7 @@ export function InstanceShellScreen() {
     <>
       <Stack.Screen options={{ headerTitle: () => <ShellTitle name={name ?? 'Shell'} state={state} /> }} />
       <Stack.Toolbar placement="left">
-        <Stack.Toolbar.Button icon="xmark" accessibilityLabel="Close" onPress={() => router.back()} />
+        <Stack.Toolbar.Button icon={toolbarIcon('xmark')} accessibilityLabel="Close" onPress={() => router.back()} />
       </Stack.Toolbar>
       {menu}
     </>
@@ -186,6 +188,7 @@ function ShellSessionView({
   devKeyboard: boolean;
   header(state?: ShellState, menu?: ReactNode): ReactNode;
 }) {
+  const toolbarIcon = useToolbarIcon();
   const t = useDatumTheme();
   const theme = useTerminalTheme();
   const insets = useSafeAreaInsets();
@@ -282,12 +285,12 @@ function ShellSessionView({
 
   const menu = (
     <Stack.Toolbar placement="right">
-      <Stack.Toolbar.Menu icon="bolt" accessibilityLabel="Quick commands" title="Open a new shell">
+      <Stack.Toolbar.Menu icon={toolbarIcon('bolt')} accessibilityLabel="Quick commands" title="Open a new shell">
         <Stack.Toolbar.Menu inline title="Command">
           {QUICK_COMMANDS.map((quick) => (
             <Stack.Toolbar.MenuAction
               key={quick}
-              icon="terminal"
+              icon={toolbarIcon('terminal')}
               isOn={quick === command}
               onPress={() => open(quick, container)}>
               {quick}

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState, type ComponentType, type RefObject } from 'react';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { TerminalPort } from '@/resources/console/bridge';
 import { hasWebView } from '@/resources/console/native-support';
@@ -12,8 +12,9 @@ import {
 } from '@/resources/console/protocol';
 
 /** Where the build puts the page (plugins/with-console-assets.js), relative to the app bundle. */
-const PAGE = 'console/terminal.html';
-const PAGE_DIR = 'console';
+// iOS: bundle-relative file URL; Android: the APK's assets (plugins/with-console-assets).
+const PAGE = Platform.OS === 'android' ? 'file:///android_asset/console/terminal.html' : 'console/terminal.html';
+const PAGE_DIR = Platform.OS === 'android' ? 'file:///android_asset/console/' : 'console';
 
 export const TERMINAL_STOPPED = 'The terminal stopped. Reconnect to open a new shell.';
 export const CLIENT_MISSING = "The shell client isn't part of this build.";

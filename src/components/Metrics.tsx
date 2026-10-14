@@ -1,6 +1,4 @@
 import { Skeleton, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { withAlpha } from '@datum-cloud/datum-ui-tokens';
-import { Chart, Host, ZStack, type ChartDataPoint } from '@expo/ui/swift-ui';
 import { Stack } from 'expo-router';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -9,18 +7,26 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import type { MetricRangeControl } from '@/hooks/useMetricRange';
 import { metricRangePreset, splitUnit, type MetricPoint } from '@/lib/metrics';
 
+import { TimeSeriesChart } from './charts/TimeSeriesChart';
 import { Notice } from './Notice';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
+
+// The charts are platform-split: Swift Charts on iOS, react-native-svg on Android.
+export { axisTimeLabel } from './charts/scale';
+export { CategoryBarChart, TimeSeriesChart } from './charts/TimeSeriesChart';
+export type { CategoryBarChartProps, TimeSeriesChartProps } from './charts/TimeSeriesChart.types';
 
 /**
  * Header time-range menu for a metrics screen (the same native toolbar menu
  * the log screens use).
  */
 export function MetricRangeMenu({ control, hidden }: { control: MetricRangeControl; hidden?: boolean }) {
+  const toolbarIcon = useToolbarIcon();
   const { range, setRange, allowed } = control;
   if (hidden) return null;
   return (
     <Stack.Toolbar placement="right">
-      <Stack.Toolbar.Menu icon="clock" accessibilityLabel="Time range" title="Time range">
+      <Stack.Toolbar.Menu icon={toolbarIcon('clock')} accessibilityLabel="Time range" title="Time range">
         {allowed.map((key) => (
           <Stack.Toolbar.MenuAction key={key} isOn={key === range} onPress={() => setRange(key)}>
             {metricRangePreset(key).label}
@@ -148,105 +154,6 @@ export function KpiGrid({ children }: { children: ReactNode }) {
 
 const SPARK_HEIGHT = 34;
 
-/**
- * Swift Charts' automatic x scale includes zero, so raw unix seconds squash a
- * series against the right edge, and clock-time category labels collide
- * (VictoriaMetrics doesn't always align samples to the step, so the first
- * and last hourly samples of a day can share "18:13"). Points are plotted as
- * seconds before the window end instead: zero pins the window end (now) to
- * the right edge, so a series that stopped reporting shows the gap. The time
- * labels are drawn underneath in React Native.
- */
-function toChartData(points: readonly MetricPoint[], end: number): ChartDataPoint[] {
-  return points.map((p) => ({ x: p.t - end, y: p.v }));
-}
-
-/** "18:05", or "Mon 18:05" past 12 hours, where the clock alone would repeat. */
-export function axisTimeLabel(t: number, spanSeconds: number): string {
-  const d = new Date(t * 1000);
-  const clock = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  return spanSeconds > 12 * 3600 ? `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clock}` : clock;
-}
-
-/**
- * One series over time in Swift Charts, as an area with a line on top (or a
- * line alone). `end` (unix seconds) is the window end, pinned to the right
- * edge; the left edge is the first sample. With `timeAxis`, the first,
- * middle and end times sit underneath.
- */
-export function TimeSeriesChart({
-  points,
-  end,
-  color,
-  height,
-  type = 'area',
-  timeAxis = false,
-}: {
-  points: readonly MetricPoint[];
-  end: number;
-  color: string;
-  height: number;
-  type?: 'area' | 'line';
-  timeAxis?: boolean;
-}) {
-  const t = useDatumTheme();
-  const data = toChartData(points, end);
-  const first = points[0]?.t ?? end;
-  const span = end - first;
-  return (
-    <View style={{ gap: 6, alignSelf: 'stretch' }}>
-      <Host style={{ height, alignSelf: 'stretch' }} pointerEvents="none">
-        <ZStack>
-          {type === 'area' ? (
-            <Chart type="area" data={data} showGrid={false} animate={false} areaStyle={{ color: withAlpha(color, 0.2) }} />
-          ) : null}
-          <Chart
-            type="line"
-            data={data}
-            showGrid={false}
-            animate={false}
-            lineStyle={{ color, width: timeAxis ? 2 : 1.5, pointSize: 0 }}
-          />
-        </ZStack>
-      </Host>
-      {timeAxis ? (
-        <View style={[styles.timeAxis, { borderTopColor: t.colors.border }]}>
-          {[first, first + span / 2, end].map((time, i) => (
-            <Text
-              key={i}
-              size="2xs"
-              tone="muted"
-              style={{ flex: 1, textAlign: i === 0 ? 'left' : i === 1 ? 'center' : 'right' }}>
-              {axisTimeLabel(time, span)}
-            </Text>
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-/** Category bars (status classes, WAF outcomes), each in its own colour. */
-export function CategoryBarChart({
-  bars,
-  height,
-}: {
-  bars: readonly { label: string; value: number; color: string }[];
-  height: number;
-}) {
-  return (
-    <Host style={{ height, alignSelf: 'stretch' }} pointerEvents="none">
-      <Chart
-        type="bar"
-        data={bars.map((bar) => ({ x: bar.label, y: bar.value, color: bar.color }))}
-        showGrid
-        animate={false}
-        barStyle={{ cornerRadius: 4 }}
-      />
-    </Host>
-  );
-}
-
 /** A row of labelled values under a chart: "p50 12 ms · p95 640 ms · p99 1.2 s". */
 export function MetricLegend({
   items,
@@ -307,5 +214,4 @@ const styles = StyleSheet.create({
   legendItem: { flex: 1, gap: 2 },
   legendLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4 },
-  timeAxis: { flexDirection: 'row', borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 4 },
 });

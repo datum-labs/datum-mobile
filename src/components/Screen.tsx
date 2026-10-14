@@ -1,6 +1,7 @@
 import { useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { useCallback, useState, type ReactNode } from 'react';
-import { RefreshControl, StyleSheet, type ScrollViewProps } from 'react-native';
+import { Platform, RefreshControl, StyleSheet, type ScrollViewProps } from 'react-native';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import Animated, { type AnimatedRef, type ScrollHandlerProcessed } from 'react-native-reanimated';
 
 type Props = Omit<ScrollViewProps, 'refreshControl' | 'onScroll'> & {
@@ -30,6 +31,10 @@ export function Screen({
   ...rest
 }: Props) {
   const t = useDatumTheme();
+  // iOS insets the content below the transparent header itself
+  // (contentInsetAdjustmentBehavior); Android needs it as padding.
+  const headerHeight = useHeaderHeight();
+  const androidTop = Platform.OS === 'android' ? { paddingTop: headerHeight + 8 } : null;
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = useCallback(async () => {
     if (!onRefresh) return;
@@ -50,13 +55,15 @@ export function Screen({
       automaticallyAdjustsScrollIndicatorInsets
       keyboardDismissMode="on-drag"
       style={[{ flex: 1, backgroundColor: t.colors.background }, style]}
-      contentContainerStyle={[styles.content, contentContainerStyle]}
+      contentContainerStyle={[styles.content, androidTop, contentContainerStyle]}
       refreshControl={
         onRefresh ? (
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
             tintColor={refreshTint ?? t.colors.primary}
+            colors={[t.colors.primary]}
+            progressViewOffset={Platform.OS === 'android' ? headerHeight : undefined}
           />
         ) : undefined
       }

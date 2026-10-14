@@ -10,6 +10,7 @@ import { useProjectId } from '@/context/ProjectContext';
 import { useSegment } from '@/hooks/useSegment';
 import { useConnectors } from '@/resources/connectors/queries';
 import { useNetworks } from '@/resources/networks/queries';
+import { useToolbarIcon } from '@/lib/icons/toolbar';
 
 const SEGMENTS = [
   { value: 'networks', label: 'Networks' },
@@ -18,6 +19,7 @@ const SEGMENTS = [
 type Segment = (typeof SEGMENTS)[number]['value'];
 
 export default function NetworkIndex() {
+  const toolbarIcon = useToolbarIcon();
   const projectId = useProjectId();
   const [segment, setSegment] = useSegment<Segment>(
     SEGMENTS.map((s) => s.value),
@@ -33,7 +35,7 @@ export default function NetworkIndex() {
       {projectId ? (
         <Stack.Toolbar placement="right">
           <Stack.Toolbar.Button
-            icon="plus"
+            icon={toolbarIcon('plus')}
             accessibilityLabel="New private network"
             onPress={() => router.push('/new-network')}
           />

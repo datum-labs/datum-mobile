@@ -2,7 +2,7 @@ import { StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Link, type Href } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 
 import type { StatusView } from '@/lib/status/types';
@@ -68,7 +68,8 @@ function RowBody({ title, subtitle, meta, icon, status, trailing, href }: Resour
  * iOS 18+ zoom transition from this row (Link.AppleZoom).
  */
 export function ResourceRow(props: ResourceRowProps) {
-  const { href, index = 0, testID, zoom = true } = props;
+  // The zoom transition is iOS 18+ only; Android pushes with the standard Material motion.
+  const { href, index = 0, testID, zoom = Platform.OS === 'ios' } = props;
   const entering = FadeInDown.delay(Math.min(index, 12) * 35)
     .duration(320)
     .withInitialValues({ transform: [{ translateY: 10 }] });

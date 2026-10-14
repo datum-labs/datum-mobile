@@ -11,7 +11,7 @@
 //   node scripts/build-console-web.mjs  (esbuild: terminal.html)
 const fs = require('node:fs');
 const path = require('node:path');
-const { withXcodeProject } = require('expo/config-plugins');
+const { withDangerousMod, withXcodeProject } = require('expo/config-plugins');
 
 const ROOT = path.resolve(__dirname, '..');
 const FILES = ['terminal.html', 'console-session.wasm'];
@@ -43,7 +43,26 @@ function assertBuilt() {
   }
 }
 
+/**
+ * Android: copy the files into the APK's assets (`file:///android_asset/console/`)
+ * at prebuild. Unlike iOS there's no build phase; re-run prebuild after
+ * rebuilding the WASM.
+ */
+function withAndroidConsoleAssets(config) {
+  return withDangerousMod(config, [
+    'android',
+    async (cfg) => {
+      assertBuilt();
+      const dest = path.join(cfg.modRequest.platformProjectRoot, 'app/src/main/assets/console');
+      fs.mkdirSync(dest, { recursive: true });
+      for (const f of FILES) fs.copyFileSync(path.join(ROOT, 'assets/console', f), path.join(dest, f));
+      return cfg;
+    },
+  ]);
+}
+
 module.exports = function withConsoleAssets(config) {
+  config = withAndroidConsoleAssets(config);
   // Checked in the mod, not here: plugins also run when Metro or `expo
   // export` read the config, which don't need the files.
   return withXcodeProject(config, (cfg) => {

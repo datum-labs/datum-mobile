@@ -574,3 +574,28 @@ commands: the shell runs as you.
   the PromQL. Production has no `telemetryUrl`, so it shows "Metrics aren't
   available" until a tenant-safe metrics API exists; switching is a change to
   that one file.
+
+## Android (preview)
+
+The app also builds for Android with Material 3: the same screens, with
+Compose (`@expo/ui/jetpack-compose`) where iOS uses SwiftUI, Material Symbols
+for SF Symbols (`src/lib/icons/material.ts`), and `*.android.tsx` variants
+where a component differs. Not yet on Android: Connect this phone (VPN),
+widgets/Quick Settings tiles, and Play distribution.
+
+Toolchain (once): `brew install openjdk@17 && brew install --cask android-commandlinetools`, then
+`sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1" "emulator" "system-images;android-36;google_apis_playstore;arm64-v8a"`
+and `avdmanager create avd -n datum-pixel -k "system-images;android-36;google_apis_playstore;arm64-v8a" -d pixel_9`.
+
+```sh
+export JAVA_HOME=$(brew --prefix openjdk@17)/libexec/openjdk.jdk/Contents/Home
+export ANDROID_HOME=$(brew --prefix)/share/android-commandlinetools
+export PATH=$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+emulator -avd datum-pixel &
+APP_VARIANT=staging npx expo prebuild --platform android
+(cd android && ./gradlew assembleDebug -PreactNativeArchitectures=arm64-v8a)
+adb reverse tcp:8081 tcp:8081 && adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Android deep links open without a prompt, e.g.
+`adb shell am start -a android.intent.action.VIEW -d "net.datum.cloud.staging:/alb/<name>" net.datum.cloud.staging`.

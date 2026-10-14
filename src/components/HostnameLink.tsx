@@ -1,54 +1,14 @@
-import { impactHaptic, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { Button, Host, Menu } from '@expo/ui/swift-ui';
-import { labelStyle, tint } from '@expo/ui/swift-ui/modifiers';
-import * as Clipboard from 'expo-clipboard';
-import * as Haptics from 'expo-haptics';
-import * as Linking from 'expo-linking';
-import { Alert, Share, StyleSheet, View } from 'react-native';
+import { Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { StyleSheet, View } from 'react-native';
 
-import { hostnameUrl, isOpenableHostname } from '@/lib/hostnames';
+import { openHostname } from '@/lib/hostname-actions';
+import { isOpenableHostname } from '@/lib/hostnames';
 
+import { HostnameMenu } from './HostnameMenu';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
-export async function openHostname(hostname: string) {
-  impactHaptic('light');
-  try {
-    await Linking.openURL(hostnameUrl(hostname));
-  } catch {
-    Alert.alert("Couldn't open link", hostnameUrl(hostname));
-  }
-}
-
-async function copyHostname(hostname: string) {
-  await Clipboard.setStringAsync(hostname);
-  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-}
-
-/** Native ⋯ menu: open, copy and share a hostname (copy only for wildcards). */
-function HostnameMenu({ hostname, openable }: { hostname: string; openable: boolean }) {
-  const t = useDatumTheme();
-  return (
-    <Host matchContents colorScheme={t.scheme}>
-      <Menu
-        label={`Actions for ${hostname}`}
-        systemImage="ellipsis.circle"
-        modifiers={[labelStyle('iconOnly'), tint(t.colors.primary)]}>
-        {openable ? (
-          <Button label="Open in Browser" systemImage="safari" onPress={() => void openHostname(hostname)} />
-        ) : null}
-        <Button label="Copy Hostname" systemImage="doc.on.doc" onPress={() => void copyHostname(hostname)} />
-        {openable ? (
-          <Button
-            label="Share…"
-            systemImage="square.and.arrow.up"
-            onPress={() => void Share.share({ url: hostnameUrl(hostname) }).catch(() => undefined)}
-          />
-        ) : null}
-      </Menu>
-    </Host>
-  );
-}
+export { openHostname } from '@/lib/hostname-actions';
 
 /**
  * A hostname that opens over HTTPS in the user's default browser, with a ⋯
