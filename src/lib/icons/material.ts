@@ -45,6 +45,7 @@ export const MATERIAL_SYMBOLS: Record<string, AndroidSymbol> = {
   'house.fill': 'home',
   'info.circle.fill': 'info',
   'iphone.gen3.radiowaves.left.and.right': 'mobile_share',
+  keyboard: 'keyboard',
   'keyboard.chevron.compact.down': 'keyboard_hide',
   link: 'link',
   'list.bullet.rectangle': 'list_alt',

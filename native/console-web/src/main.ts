@@ -166,6 +166,63 @@ function start() {
   term.onResize((size) => controller.onResize(size));
   term.textarea?.addEventListener('focus', () => post({ type: 'focus', focused: true }));
   term.textarea?.addEventListener('blur', () => post({ type: 'focus', focused: false }));
+  // Android keyboards (Gboard) commit and compose text in xterm's hidden
+  // textarea; xterm's own handling sends input and then re-sends leftovers on
+  // Enter, doubling characters ("ls /" ran as "ls //"). On Android the page
+  // takes text input over: each change to the textarea goes to the shell as a
+  // diff (backspaces for anything rewritten), and the textarea is emptied once
+  // nothing is being composed. Real keys (Enter, arrows, ...) still reach xterm.
+  if (/Android/i.test(navigator.userAgent) && term.textarea) {
+    const textarea = term.textarea;
+    let sent = '';
+    const send = (data: string) => {
+      if (data) controller.onData(data);
+    };
+    const flush = () => {
+      const value = textarea.value;
+      let common = 0;
+      while (common < sent.length && common < value.length && sent[common] === value[common]) common++;
+      send('\x7f'.repeat(sent.length - common) + value.slice(common));
+      sent = value;
+    };
+    const reset = () => {
+      textarea.value = '';
+      sent = '';
+    };
+    const swallow = (e: Event) => e.stopImmediatePropagation();
+    textarea.addEventListener('compositionstart', swallow, true);
+    textarea.addEventListener('compositionupdate', swallow, true);
+    textarea.addEventListener(
+      'compositionend',
+      (e) => {
+        swallow(e);
+        flush();
+        reset();
+      },
+      true
+    );
+    // Key 229 is "the IME is handling this"; xterm would start its own composition.
+    textarea.addEventListener('keydown', (e) => e.keyCode === 229 && swallow(e), true);
+    textarea.addEventListener(
+      'input',
+      (e) => {
+        swallow(e);
+        const input = e as InputEvent;
+        if (input.inputType === 'insertLineBreak') {
+          reset();
+          send('\r');
+          return;
+        }
+        if (input.inputType === 'deleteContentBackward' && sent === '' && textarea.value === '') {
+          send('\x7f');
+          return;
+        }
+        flush();
+        if (!input.isComposing) reset();
+      },
+      true
+    );
+  }
 
   const refit = () => {
     fit.fit();

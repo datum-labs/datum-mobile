@@ -157,7 +157,7 @@ export function ShellTerminal({
       overScrollMode="never"
       automaticallyAdjustContentInsets={false}
       contentInsetAdjustmentBehavior="never"
-      dataDetectorTypes="none"
+      dataDetectorTypes={["none"]}
       allowsLinkPreview={false}
       autoManageStatusBarEnabled={false}
       webviewDebuggingEnabled={__DEV__}
