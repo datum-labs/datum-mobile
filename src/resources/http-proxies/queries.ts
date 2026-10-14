@@ -16,7 +16,25 @@ export const httpProxyKeys = {
   detail: (projectId: string, name: string) => [...httpProxyKeys.details(), projectId, name] as const,
   waf: () => [...httpProxyKeys.all, 'waf'] as const,
   wafList: (projectId: string) => [...httpProxyKeys.waf(), 'list', projectId] as const,
+  basicAuth: (projectId: string, name: string) => [...httpProxyKeys.all, 'basic-auth', projectId, name] as const,
+  description: (projectId: string, name: string) => [...httpProxyKeys.all, 'description', projectId, name] as const,
 };
+
+export function useProxyBasicAuth(projectId: string | undefined, name: string | undefined) {
+  return useQuery({
+    queryKey: httpProxyKeys.basicAuth(projectId ?? '', name ?? ''),
+    queryFn: ({ signal }) => httpProxyService.basicAuth(projectId as string, name as string, signal),
+    enabled: !!projectId && !!name,
+  });
+}
+
+export function useProxyDescription(projectId: string | undefined, name: string | undefined) {
+  return useQuery({
+    queryKey: httpProxyKeys.description(projectId ?? '', name ?? ''),
+    queryFn: ({ signal }) => httpProxyService.description(projectId as string, name as string, signal),
+    enabled: !!projectId && !!name,
+  });
+}
 
 export function useHttpProxies(projectId: string | undefined) {
   const refetchInterval = useLiveRefetchInterval();

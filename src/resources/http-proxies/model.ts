@@ -14,6 +14,15 @@ import {
 } from '@/lib/status/waf-status';
 
 import { displayNameOf, toConditions, toMeta, type Condition, type ResourceMeta } from '../shared';
+import {
+  excludedTags,
+  healthCheckView,
+  hostHeaderOverride,
+  hstsEnabled,
+  lastUpdatedAt,
+  loadBalancingLabel,
+  type HealthCheckView,
+} from './config';
 
 /** Label the compute controller stamps on an ALB it created for a workload. */
 export const COMPUTE_WORKLOAD_NAME_LABEL = 'compute.datumapis.com/workload-name';
@@ -40,6 +49,12 @@ export interface HttpProxy extends ResourceMeta {
   enableHttpRedirect: boolean;
   workloadName?: string;
   provisioning: boolean;
+  /** Read-only configuration the portal shows (see ./config). */
+  hostHeader?: string;
+  hsts: boolean;
+  loadBalancing: string;
+  healthCheck: HealthCheckView;
+  updatedAt?: string;
 }
 
 type RawBackend = NonNullable<
@@ -104,6 +119,11 @@ export function toHttpProxy(raw: RawHttpProxy): HttpProxy {
     enableHttpRedirect: hasRedirectRule,
     workloadName: meta.labels[COMPUTE_WORKLOAD_NAME_LABEL],
     provisioning: isHttpProxyProvisioning({ status, hostnames, hostnameStatuses }),
+    hostHeader: hostHeaderOverride(raw),
+    hsts: hstsEnabled(raw),
+    loadBalancing: loadBalancingLabel(raw),
+    healthCheck: healthCheckView(raw),
+    updatedAt: lastUpdatedAt(raw),
   };
 }
 
@@ -122,6 +142,8 @@ export interface WafView {
   state: WafProtectionState;
   message?: string;
   paranoia?: { blocking?: number; detection?: number };
+  /** CRS tags excluded by the policy (rule categories turned off). */
+  excludedTags: string[];
 }
 
 /**
@@ -156,7 +178,7 @@ export function toWafView(
   policies: { items: RawTrafficProtectionPolicy[]; forbidden: boolean },
   proxyName: string
 ): WafView {
-  if (policies.forbidden) return { forbidden: true, state: 'disabled' };
+  if (policies.forbidden) return { forbidden: true, state: 'disabled', excludedTags: [] };
   const policy = selectPolicyForProxy(policies.items, proxyName);
   const mode = getMode(policy);
   const programmed = isTrafficProtectionProgrammed(policy?.status);
@@ -168,6 +190,7 @@ export function toWafView(
     state: getWafProtectionState(mode, programmed, reason),
     message: getTrafficProtectionProgrammedMessage(policy?.status),
     paranoia: getParanoia(policy),
+    excludedTags: excludedTags(policy),
   };
 }
 

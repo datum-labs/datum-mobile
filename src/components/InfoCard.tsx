@@ -36,13 +36,15 @@ export function InfoCard({ rows }: { rows: InfoRow[] }) {
             <CardField
               key={row.label}
               label={row.label}
+              layout={row.stacked ? 'stacked' : 'inline'}
               value={
                 <Text
                   size="sm"
                   mono={row.mono}
                   selectable
-                  numberOfLines={3}
-                  style={{ textAlign: 'right' }}>
+                  numberOfLines={row.stacked ? undefined : 3}
+                  tone={row.stacked ? 'muted' : undefined}
+                  style={{ textAlign: row.stacked ? 'left' : 'right' }}>
                   {String(row.value)}
                 </Text>
               }

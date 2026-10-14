@@ -2,6 +2,8 @@ import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-clou
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { AlbHealthCard } from '@/components/alb/AlbHealthCard';
+import { WafCategoriesRow } from '@/components/alb/WafCategoriesRow';
 import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { HostnameLink, openHostname } from '@/components/HostnameLink';
@@ -12,7 +14,7 @@ import { Section } from '@/components/Section';
 import { isOpenableHostname } from '@/lib/hostnames';
 import { ErrorState, RowSkeletons } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
-import { formatDate } from '@/lib/format';
+import { formatDate, timeAgo } from '@/lib/format';
 import {
   getActionableRecordsToPublish,
   getCertificateReadyCondition,
@@ -27,7 +29,22 @@ import {
 import type { StatusView } from '@/lib/status/types';
 import type { HttpProxy, HttpProxyBackend } from '@/resources/http-proxies/model';
 import { sensitivityLabel, wafStatusView } from '@/resources/http-proxies/model';
-import { useHttpProxy, useProxyWaf } from '@/resources/http-proxies/queries';
+import { useWorkloads } from '@/resources/compute/queries';
+import {
+  albHealth,
+  durationLabel,
+  noteText,
+  originTls,
+  poolRows,
+  wafCategoriesView,
+  type OriginTls,
+} from '@/resources/http-proxies/config';
+import {
+  useHttpProxy,
+  useProxyBasicAuth,
+  useProxyDescription,
+  useProxyWaf,
+} from '@/resources/http-proxies/queries';
 
 function certView(status: HostnameStatusLike | undefined): StatusView {
   const condition = getCertificateReadyCondition(status);
@@ -141,6 +158,21 @@ const BACKEND_LABEL: Record<HttpProxyBackend['kind'], string> = {
   endpoint: 'Origin',
 };
 
+function originTlsLabel(tls: OriginTls | undefined): string | undefined {
+  switch (tls?.kind) {
+    case 'override':
+      return tls.hostname;
+    case 'fromOrigin':
+      return tls.hostname ? `${tls.hostname} (from origin URL)` : undefined;
+    case 'perBackend':
+      return 'Set per backend';
+    case 'connector':
+      return '—';
+    default:
+      return undefined;
+  }
+}
+
 export default function AlbDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const projectId = useProjectId();
@@ -148,6 +180,12 @@ export default function AlbDetail() {
   const waf = useProxyWaf(projectId, id);
   const proxy = query.data;
   const wafView = wafStatusView(waf.data);
+  const basicAuth = useProxyBasicAuth(projectId, id);
+  const description = useProxyDescription(projectId, id);
+  const workloads = useWorkloads(projectId);
+  const workloadMissing =
+    !!proxy?.workloadName && !!workloads.data && !workloads.data.some((w) => w.name === proxy.workloadName);
+  const wafOn = !!waf.data?.mode && waf.data.mode !== 'Disabled';
 
   return (
     <>
@@ -167,7 +205,10 @@ export default function AlbDetail() {
           />
         </Stack.Toolbar>
       ) : null}
-      <Screen onRefresh={() => Promise.all([query.refetch(), waf.refetch()])}>
+      <Screen
+        onRefresh={() =>
+          Promise.all([query.refetch(), waf.refetch(), basicAuth.refetch(), description.refetch(), workloads.refetch()])
+        }>
         {!proxy ? (
           query.error ? (
             <ErrorState error={query.error} onRetry={() => void query.refetch()} />
@@ -180,13 +221,9 @@ export default function AlbDetail() {
               icon="arrow.triangle.branch"
               title={proxy.displayName}
               subtitle={proxy.canonicalHostname}
-              status={proxy.view}>
-              {proxy.view.retryRef ? (
-                <Text size="xs" tone="muted">
-                  Support reference: {proxy.view.retryRef}
-                </Text>
-              ) : null}
-            </DetailHeader>
+              status={proxy.view}
+            />
+            <AlbHealthCard health={albHealth(proxy, { workloadMissing })} />
 
             <Section title="Observability">
               <ResourceRow
@@ -201,6 +238,13 @@ export default function AlbDetail() {
                 title="Access logs"
                 subtitle="Requests through this load balancer"
                 href={`/alb/${encodeURIComponent(proxy.name)}/logs`}
+              />
+              <ResourceRow
+                index={2}
+                icon="clock.arrow.circlepath"
+                title="Activity"
+                subtitle="Changes in the last 7 days"
+                href={`/alb/${encodeURIComponent(proxy.name)}/activity`}
               />
             </Section>
 
@@ -218,29 +262,52 @@ export default function AlbDetail() {
                   No backends configured.
                 </Text>
               ) : (
-                proxy.backends.map((b, i) => (
+                poolRows(proxy.backends).map((row, i) => (
                   <ResourceRow
-                    key={`${b.kind}/${i}`}
+                    key={`${row.backend.kind}/${i}`}
                     index={i}
                     icon={
-                      b.kind === 'connector'
+                      row.backend.kind === 'connector'
                         ? 'cable.connector'
-                        : b.kind === 'endpoint'
+                        : row.backend.kind === 'endpoint'
                           ? 'server.rack'
                           : 'shippingbox.fill'
                     }
-                    title={backendTitle(b)}
-                    subtitle={[BACKEND_LABEL[b.kind], b.tlsHostname ? `TLS ${b.tlsHostname}` : undefined]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    title={backendTitle(row.backend)}
+                    subtitle={`${BACKEND_LABEL[row.backend.kind]} · ${row.transport}`}
+                    trailing={
+                      proxy.backends.length > 1 ? (
+                        <Text size="sm" weight="medium" tone={row.weight === 0 ? 'muted' : undefined}>
+                          {row.share}
+                        </Text>
+                      ) : undefined
+                    }
                     href={
-                      b.kind === 'connector' && b.connector
-                        ? `/connectors/${encodeURIComponent(b.connector)}`
+                      row.backend.kind === 'connector' && row.backend.connector
+                        ? `/connectors/${encodeURIComponent(row.backend.connector)}`
                         : undefined
                     }
                   />
                 ))
               )}
+              <InfoCard
+                rows={[
+                  { label: 'Load balancing', value: proxy.loadBalancing },
+                  { label: 'Outlier detection', value: proxy.healthCheck.enabled ? 'On' : 'Off' },
+                  proxy.healthCheck.enabled
+                    ? { label: 'Eject after', value: `${proxy.healthCheck.consecutive5xxErrors} consecutive 5xx responses` }
+                    : null,
+                  proxy.healthCheck.enabled
+                    ? {
+                        label: 'Ejection time',
+                        value: `${durationLabel(proxy.healthCheck.baseEjectionTime)}, longer on each repeat`,
+                      }
+                    : null,
+                  proxy.healthCheck.enabled
+                    ? { label: 'Max ejected', value: `${proxy.healthCheck.maxEjectionPercent}% of a backend's endpoints` }
+                    : { label: 'Effect', value: 'Endpoints keep receiving traffic even while they return errors' },
+                ]}
+              />
             </Section>
 
             <Section title="Security & WAF">
@@ -258,17 +325,59 @@ export default function AlbDetail() {
                   },
                   waf.data?.mode ? { label: 'Mode', value: waf.data.mode } : null,
                   // Named like the portal's "Sensitivity" (OWASP CRS paranoia level).
-                  waf.data?.mode && waf.data.mode !== 'Disabled'
-                    ? { label: 'Sensitivity', value: sensitivityLabel(waf.data.paranoia?.blocking) }
-                    : null,
+                  wafOn ? { label: 'Sensitivity', value: sensitivityLabel(waf.data?.paranoia?.blocking) } : null,
                   // The portal keeps detection equal to blocking; only call it out when it differs.
-                  waf.data?.mode &&
-                  waf.data.mode !== 'Disabled' &&
-                  waf.data.paranoia?.detection &&
+                  wafOn &&
+                  waf.data?.paranoia?.detection &&
                   waf.data.paranoia.detection !== (waf.data.paranoia.blocking ?? 1)
                     ? { label: 'Also logging', value: sensitivityLabel(waf.data.paranoia.detection) }
                     : null,
+                  wafOn
+                    ? {
+                        label: 'Rule categories',
+                        stacked: true,
+                        value: <WafCategoriesRow view={wafCategoriesView(waf.data?.excludedTags ?? [])} />,
+                      }
+                    : null,
                   wafView?.detail ? { label: 'Status', value: wafView.detail } : null,
+                ]}
+              />
+            </Section>
+
+            <Section title="Access">
+              <InfoCard
+                rows={[
+                  {
+                    label: 'Basic authentication',
+                    value:
+                      basicAuth.data === 'enabled'
+                        ? 'Enabled'
+                        : basicAuth.data === 'disabled'
+                          ? 'Disabled'
+                          : basicAuth.data === 'forbidden'
+                            ? 'No access'
+                            : basicAuth.error
+                              ? '—'
+                              : 'Loading…',
+                  },
+                  {
+                    label: 'Host header',
+                    value: proxy.hostHeader ?? 'Forwarded unchanged',
+                    mono: !!proxy.hostHeader,
+                  },
+                ]}
+              />
+            </Section>
+
+            <Section title="TLS">
+              <InfoCard
+                rows={[
+                  { label: 'Force HTTPS', value: proxy.enableHttpRedirect ? 'On' : 'Off' },
+                  { label: 'HSTS', value: proxy.hsts ? 'Enabled' : 'Disabled' },
+                  {
+                    label: 'Origin TLS hostname',
+                    value: originTlsLabel(originTls(proxy.backends)),
+                  },
                 ]}
               />
             </Section>
@@ -277,6 +386,9 @@ export default function AlbDetail() {
               <InfoCard
                 rows={[
                   { label: 'Name', value: proxy.name, mono: true },
+                  description.data?.content
+                    ? { label: 'Description', value: noteText(description.data.content), stacked: true }
+                    : null,
                   {
                     label: 'Default hostname',
                     stacked: true,
@@ -284,9 +396,9 @@ export default function AlbDetail() {
                       <HostnameLink hostname={proxy.canonicalHostname} size="sm" />
                     ) : undefined,
                   },
-                  { label: 'HTTP → HTTPS', value: proxy.enableHttpRedirect ? 'Redirect' : 'Off' },
                   proxy.workloadName ? { label: 'Workload', value: proxy.workloadName } : null,
                   { label: 'Created', value: formatDate(proxy.createdAt) },
+                  proxy.updatedAt ? { label: 'Last updated', value: timeAgo(proxy.updatedAt) } : null,
                 ]}
               />
             </Section>
