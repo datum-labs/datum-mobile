@@ -17,6 +17,7 @@ import {
   font,
   foregroundStyle,
   listRowBackground,
+  listSectionSpacing,
   scrollContentBackground,
   textSelection,
 } from '@expo/ui/swift-ui/modifiers';
@@ -32,12 +33,13 @@ import { clearQueryCache } from '@/lib/query';
 import { useUserProfile } from '@/resources/users/queries';
 
 const SECONDARY = foregroundStyle({ type: 'hierarchical', style: 'secondary' });
-const MONO = font({ design: 'monospaced', size: 15 });
 const host = (url: string) => url.replace(/^https:\/\//, '');
 
 /**
  * Account, as a SwiftUI Form (the Settings-app inset grouped list) rendered
- * natively through @expo/ui, under the shared large Canela title.
+ * natively through @expo/ui, under the shared large Canela title. Rows use the
+ * app's Alliance face at subheadline size, so they read like the rest of the
+ * app and still follow Dynamic Type.
  */
 export default function Account() {
   const t = useDatumTheme();
@@ -52,6 +54,14 @@ export default function Account() {
   const email = profile?.email ?? user?.email;
   const row = listRowBackground(t.colors.card);
   const tint = t.scheme === 'dark' ? t.colors.primary : t.palette.midnightFjord;
+
+  const text = (weight: 'regular' | 'medium' | 'semibold' = 'regular', textStyle: 'subheadline' | 'footnote' | 'headline' = 'subheadline') =>
+    font({
+      family: t.fonts.sans[weight],
+      size: textStyle === 'headline' ? 17 : textStyle === 'footnote' ? 13 : 15,
+      textStyle,
+    });
+  const MONO = font({ design: 'monospaced', size: 13, textStyle: 'footnote' });
 
   const switchAccount = async () => {
     setBusy(true);
@@ -79,52 +89,46 @@ export default function Account() {
         useViewportSizeMeasurement
         colorScheme={t.scheme}
         seedColor={tint}>
-        <Form modifiers={[scrollContentBackground('hidden')]}>
+        <Form modifiers={[scrollContentBackground('hidden'), listSectionSpacing('compact'), text()]}>
           <Section
-            footer={devToken ? <Text>Signed in with a developer access token.</Text> : undefined}>
-            <HStack spacing={14} modifiers={[row]}>
+            footer={devToken ? <Text modifiers={[text('regular', 'footnote')]}>Signed in with a developer access token.</Text> : undefined}>
+            <HStack spacing={12} modifiers={[row]}>
               {profile?.avatarUrl ? (
                 <RNHostView matchContents>
                   <RemoteImage
                     source={{ uri: profile.avatarUrl }}
-                    style={{ width: 52, height: 52, borderRadius: 26 }}
+                    style={{ width: 44, height: 44, borderRadius: 22 }}
                     transition={200}
                     cachePolicy="disk"
                     accessibilityIgnoresInvertColors
                   />
                 </RNHostView>
               ) : (
-                <Image systemName="person.crop.circle.fill" size={52} modifiers={[SECONDARY]} />
+                <Image systemName="person.crop.circle.fill" size={44} modifiers={[SECONDARY]} />
               )}
               <VStack alignment="leading" spacing={2}>
-                <Text modifiers={[font({ size: 20, weight: 'semibold' })]}>
-                  {name ?? 'Signed in'}
-                </Text>
-                {email ? <Text modifiers={[SECONDARY]}>{email}</Text> : null}
+                <Text modifiers={[text('semibold', 'headline')]}>{name ?? 'Signed in'}</Text>
+                {email ? <Text modifiers={[text('regular', 'footnote'), SECONDARY]}>{email}</Text> : null}
               </VStack>
             </HStack>
           </Section>
 
-          <Section title="Current project">
+          <Section title="Project">
             <LabeledContent label="Organization" modifiers={[row]}>
-              <Text modifiers={[SECONDARY]}>
-                {selection?.orgName ?? selection?.orgId ?? 'None'}
-              </Text>
+              <Text modifiers={[SECONDARY]}>{selection?.orgName ?? selection?.orgId ?? 'None'}</Text>
             </LabeledContent>
             <LabeledContent label="Project" modifiers={[row]}>
-              <Text modifiers={[SECONDARY]}>
-                {selection?.projectName ?? selection?.projectId ?? 'None'}
-              </Text>
+              <Text modifiers={[SECONDARY]}>{selection?.projectName ?? selection?.projectId ?? 'None'}</Text>
             </LabeledContent>
             <Button
-              label="Change Project…"
-              systemImage="square.stack.3d.up"
+              label="Change Project"
+              systemImage="arrow.left.arrow.right"
               onPress={() => router.push('/context-switcher')}
               modifiers={[row]}
             />
           </Section>
 
-          <Section title="Session">
+          <Section>
             <Button
               label="Switch Account"
               systemImage="person.2"
@@ -140,13 +144,12 @@ export default function Account() {
                 <Button
                   label="Sign Out"
                   systemImage="rectangle.portrait.and.arrow.right"
-                  role="destructive"
                   onPress={() => setConfirmSignOut(true)}
                   modifiers={[row, disabled(busy)]}
                 />
               </ConfirmationDialog.Trigger>
               <ConfirmationDialog.Actions>
-                <Button label="Sign Out" role="destructive" onPress={() => void doSignOut()} />
+                <Button label="Sign Out" onPress={() => void doSignOut()} />
                 <Button label="Cancel" role="cancel" />
               </ConfirmationDialog.Actions>
               <ConfirmationDialog.Message>
@@ -159,29 +162,14 @@ export default function Account() {
             <LabeledContent label="Version" modifiers={[row]}>
               <Text modifiers={[SECONDARY]}>{env.version}</Text>
             </LabeledContent>
-            <LabeledContent label="Environment" modifiers={[row]}>
-              <Text modifiers={[SECONDARY]}>{env.variant}</Text>
-            </LabeledContent>
+            {env.variant !== 'production' ? (
+              <LabeledContent label="Environment" modifiers={[row]}>
+                <Text modifiers={[SECONDARY]}>{env.variant[0].toUpperCase() + env.variant.slice(1)}</Text>
+              </LabeledContent>
+            ) : null}
             <LabeledContent label="API" modifiers={[row]}>
               <Text modifiers={[SECONDARY, MONO, textSelection(true)]}>{host(env.apiUrl)}</Text>
             </LabeledContent>
-            <LabeledContent label="Identity" modifiers={[row]}>
-              <Text modifiers={[SECONDARY, MONO, textSelection(true)]}>
-                {host(env.auth.issuer)}
-              </Text>
-            </LabeledContent>
-            {user?.sub ? (
-              <LabeledContent label="User ID" modifiers={[row]}>
-                <Text modifiers={[SECONDARY, MONO, textSelection(true)]}>{user.sub}</Text>
-              </LabeledContent>
-            ) : null}
-            {env.variant === 'staging' ? (
-              <LabeledContent label="OIDC client" modifiers={[row]}>
-                <Text modifiers={[SECONDARY, MONO, textSelection(true)]}>
-                  {env.auth.clientId || 'not set'}
-                </Text>
-              </LabeledContent>
-            ) : null}
           </Section>
         </Form>
       </Host>
