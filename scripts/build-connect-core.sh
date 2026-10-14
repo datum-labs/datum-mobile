@@ -36,7 +36,8 @@ for target in $TARGETS; do
   cargo build -p datum-connect-core $FLAG --target "$target" --locked
 done
 
-rm -rf "$OUT"
+# Only this build's outputs: build/android belongs to the Android script.
+rm -rf "$OUT/DatumConnectCore.xcframework" "$OUT/swift" "$OUT/headers"
 mkdir -p "$OUT/swift" "$OUT/headers"
 
 echo "==> uniffi-bindgen (swift)"
