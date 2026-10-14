@@ -32,6 +32,8 @@ import { useProjectContext } from '@/context/ProjectContext';
 import { clearQueryCache } from '@/lib/query';
 import { useUserProfile } from '@/resources/users/queries';
 
+import { DatumDistribution } from '../../../modules/datum-distribution';
+
 const SECONDARY = foregroundStyle({ type: 'hierarchical', style: 'secondary' });
 const host = (url: string) => url.replace(/^https:\/\//, '');
 
@@ -167,9 +169,12 @@ export default function Account() {
                 <Text modifiers={[SECONDARY]}>{env.variant[0].toUpperCase() + env.variant.slice(1)}</Text>
               </LabeledContent>
             ) : null}
-            <LabeledContent label="API" modifiers={[row]}>
-              <Text modifiers={[SECONDARY, MONO, textSelection(true)]}>{host(env.apiUrl)}</Text>
-            </LabeledContent>
+            {/* For testers reporting issues; App Store and development builds leave it out. */}
+            {DatumDistribution.isTestFlight ? (
+              <LabeledContent label="API" modifiers={[row]}>
+                <Text modifiers={[SECONDARY, MONO, textSelection(true)]}>{host(env.apiUrl)}</Text>
+              </LabeledContent>
+            ) : null}
           </Section>
         </Form>
       </Host>
