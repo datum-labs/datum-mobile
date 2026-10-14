@@ -185,3 +185,51 @@ export function albWafByOutcomeQuery(scope: AlbQueryScope, step: string): string
     `[${step}:1m]))`
   );
 }
+
+/** WAF events the filter stopped: `coraza_outcome` blocked or dropped (the portal's "WAF blocked"). */
+export const WAF_BLOCKED_LABELS: Record<string, string> = { coraza_outcome: '=~"blocked|dropped"' };
+
+/**
+ * Top WAF rules by events over `window`, one series per rule id × file ×
+ * phase × severity × action × CRS version. Events with no rule (allowed
+ * traffic) come back as one series with none of those labels.
+ */
+export function albWafTopRulesQuery(scope: AlbQueryScope, window: string, top = 20): string {
+  return (
+    `topk(${top}, sum by (` +
+    `coraza_rule_id, coraza_rule_file, coraza_interruption_phase, ` +
+    `coraza_rule_severity, coraza_rule_action, coraza_rule_version` +
+    `) (` +
+    `sum_over_time(` +
+    `${resetGuardedIncrease(CORAZA_EVENTS_METRIC, wafSelector(scope), '1m')}` +
+    `[${window}:1m]))` +
+    `)`
+  );
+}
+
+// ── Per region (the portal's "Active POPs" card, overview/active-pops-card.tsx) ──
+
+/** 5xx requests per second by region. The Active POPs card counts 5xx only, not 4xx. */
+export function albRegionalServerErrorRpsQuery(scope: AlbQueryScope, timeWindow: string): string {
+  return buildRateQuery({
+    metric: ENVOY_RQ_METRIC,
+    timeWindow,
+    baseLabels: albBaseLabels(scope.projectId, scope.proxyId),
+    customLabels: { [REGION_LABEL]: '!=""', envoy_response_code: '=~"5.."', ...scope.customLabels },
+    filters: [createRegionFilter(scope.regions)],
+    groupBy: [REGION_LABEL],
+  });
+}
+
+/** Upstream latency quantile (ms) by region. */
+export function albRegionalLatencyQuantileQuery(quantile: number, scope: AlbQueryScope, timeWindow: string): string {
+  return buildHistogramQuantileQuery({
+    quantile,
+    metric: ENVOY_RQ_TIME_METRIC,
+    timeWindow,
+    baseLabels: albBaseLabels(scope.projectId, scope.proxyId),
+    customLabels: { [REGION_LABEL]: '!=""', ...scope.customLabels },
+    filters: [createRegionFilter(scope.regions)],
+    groupBy: ['le', REGION_LABEL],
+  });
+}

@@ -6,11 +6,15 @@ import {
   albErrorRateQuery,
   albLatencyPercentilesQuery,
   albLatencyQuantileQuery,
+  albRegionalLatencyQuantileQuery,
   albRegionalRpsQuery,
+  albRegionalServerErrorRpsQuery,
   albRequestCountQuery,
   albRpsByClassQuery,
   albRpsQuery,
   albWafByOutcomeQuery,
+  albWafIncreaseQuery,
+  albWafTopRulesQuery,
   autoStepForRange,
   computeChartStep,
   firstSeriesPoints,
@@ -18,15 +22,21 @@ import {
   lastValue,
   metricRangePreset,
   REGION_LABEL,
+  regionTrafficView,
   resolveMetricWindow,
   scalarValue,
   valuesByLabel,
+  WAF_BLOCKED_LABELS,
+  wafTopRulesView,
   type MetricPoint,
   type MetricRangeKey,
   type PromResponse,
+  type RegionTrafficView,
+  type WafRuleRow,
 } from '@/lib/metrics';
 import { useLiveRefetchInterval } from '@/lib/query';
 
+import { useLocations } from './locations';
 import { isMetricsUnavailable, metricsSource } from './source';
 
 /** Metric responses are only useful fresh: dropped from memory quickly, never persisted. */
@@ -134,6 +144,8 @@ export interface AlbMetrics {
   waf: Record<WafOutcome, number> | null;
   /** Average requests per second per region over the window, busiest first. */
   regions: { region: string; rps: number }[];
+  /** Top WAF rules by events over the window (at most 10), busiest first. */
+  wafRules: WafRuleRow[];
 }
 
 /**
@@ -195,8 +207,9 @@ export function useAlbMetrics(projectId: string | undefined, proxyId: string | u
   const byClass = useMetricQuery({ ...common, kind: 'instant', step: window, promql: albRpsByClassQuery(scope, window) });
   const waf = useMetricQuery({ ...common, kind: 'instant', step: window, promql: albWafByOutcomeQuery(scope, window) });
   const regions = useMetricQuery({ ...common, kind: 'instant', step: window, promql: albRegionalRpsQuery(scope, window) });
+  const wafRules = useMetricQuery({ ...common, kind: 'instant', step: window, promql: albWafTopRulesQuery(scope, window) });
 
-  const all = [rps, errorRate, p95, percentiles, total, byClass, waf, regions];
+  const all = [rps, errorRate, p95, percentiles, total, byClass, waf, regions, wafRules];
   const status = statusOf(all);
 
   const data = useMemo((): AlbMetrics => {
@@ -210,10 +223,132 @@ export function useAlbMetrics(projectId: string | undefined, proxyId: string | u
       byClass: byClassView(byClass.data, durationMs / 1000),
       waf: wafView(waf.data),
       regions: regionsView(regions.data),
+      wafRules: wafTopRulesView(wafRules.data),
     };
-  }, [rps.data, errorRate.data, p95.data, percentiles.data, total.data, byClass.data, waf.data, regions.data, durationMs]);
+  }, [
+    rps.data,
+    errorRate.data,
+    p95.data,
+    percentiles.data,
+    total.data,
+    byClass.data,
+    waf.data,
+    regions.data,
+    wafRules.data,
+    durationMs,
+  ]);
 
   return { data, step, windowEnd: windowEndOf(status.updatedAt), ...status };
+}
+
+// ── Load balancer: detail-screen summaries ───────────────────────────────
+
+/** The ALB detail screen's KPIs cover the last hour, as the portal overview's "1h" window. */
+const KPI_RANGE: MetricRangeKey = '1h';
+
+export interface AlbKpis {
+  /** Latest requests per second (1m rate). */
+  rps: number | null;
+  /** Latest 4xx + 5xx share (0–1); 0 with traffic and no errors, null with no traffic. */
+  errorRate: number | null;
+  /** p95 upstream latency over the hour, ms. */
+  p95: number | null;
+  /** Requests the WAF blocked or dropped in the hour. */
+  wafBlocked: number | null;
+}
+
+/**
+ * The portal overview's four stat cards (metrics-strip.tsx) at its "1h"
+ * window: rate window = step = 1m, latency and WAF over the whole hour. The
+ * requests and error-rate queries are the metrics screen's own at its
+ * default range, so the two share a cache.
+ */
+export function useAlbKpis(projectId: string | undefined, proxyId: string | undefined) {
+  const interval = useLiveRefetchInterval();
+  const durationMs = metricRangePreset(KPI_RANGE).durationMs;
+  const step = autoStepForRange(durationMs);
+  const window = formatDurationFromMs(durationMs);
+  const scope = { projectId: projectId ?? '', proxyId: proxyId ?? '' };
+  const common = { range: KPI_RANGE, enabled: !!projectId && !!proxyId, interval } as const;
+
+  const rps = useMetricQuery({ ...common, kind: 'range', step, promql: albRpsQuery(scope, step) });
+  const errorRate = useMetricQuery({ ...common, kind: 'range', step, promql: albErrorRateQuery(scope, step) });
+  const percentiles = useMetricQuery({
+    ...common,
+    kind: 'instant',
+    step: window,
+    promql: albLatencyPercentilesQuery(scope, window),
+  });
+  const wafBlocked = useMetricQuery({
+    ...common,
+    kind: 'instant',
+    step: window,
+    promql: albWafIncreaseQuery({ ...scope, customLabels: WAF_BLOCKED_LABELS }, window),
+  });
+
+  const status = statusOf([rps, errorRate, percentiles, wafBlocked]);
+  const data = useMemo((): AlbKpis => {
+    const rpsPoints = firstSeriesPoints(rps.data);
+    return {
+      rps: lastValue(rpsPoints),
+      errorRate: errorRateView(firstSeriesPoints(errorRate.data), rpsPoints).current,
+      p95: percentilesView(percentiles.data).p95,
+      // An empty result (no WAF series at all) is nothing blocked once the query has answered.
+      wafBlocked: wafBlocked.data ? Math.round(scalarValue(wafBlocked.data) ?? 0) : null,
+    };
+  }, [rps.data, errorRate.data, percentiles.data, wafBlocked.data]);
+
+  return { data, ...status };
+}
+
+/** The portal's Active POPs card reads each region over the last 5 minutes. */
+export const ACTIVE_REGION_WINDOW = '5m';
+
+/**
+ * Regions serving this ALB with requests/s, 5xx share and p95 over 5m,
+ * merged with the project's Location catalog (portal active-pops-card.tsx).
+ * A region is active when Envoy reports a request series for it; the portal
+ * asks the label-values API for that, the app reads it off the 5m rate.
+ */
+export function useAlbActiveRegions(projectId: string | undefined, proxyId: string | undefined) {
+  const interval = useLiveRefetchInterval();
+  const scope = { projectId: projectId ?? '', proxyId: proxyId ?? '' };
+  const common = {
+    kind: 'instant',
+    range: KPI_RANGE,
+    step: ACTIVE_REGION_WINDOW,
+    enabled: !!projectId && !!proxyId,
+    interval,
+  } as const;
+
+  const rps = useMetricQuery({ ...common, promql: albRegionalRpsQuery(scope, ACTIVE_REGION_WINDOW) });
+  const errors = useMetricQuery({ ...common, promql: albRegionalServerErrorRpsQuery(scope, ACTIVE_REGION_WINDOW) });
+  const p95 = useMetricQuery({ ...common, promql: albRegionalLatencyQuantileQuery(0.95, scope, ACTIVE_REGION_WINDOW) });
+  const locations = useLocations(projectId);
+
+  const status = statusOf([rps, errors, p95]);
+  const data = useMemo(
+    (): RegionTrafficView =>
+      regionTrafficView(locations.data ?? [], {
+        rps: valuesByLabel(rps.data, REGION_LABEL),
+        serverErrorRps: valuesByLabel(errors.data, REGION_LABEL),
+        p95: valuesByLabel(p95.data, REGION_LABEL),
+      }),
+    [locations.data, rps.data, errors.data, p95.data]
+  );
+
+  return {
+    data,
+    ...status,
+    /** Regions are known once the request rates have answered (the catalog alone can't say which serve). */
+    loading:
+      !status.unavailable &&
+      ((rps.data === undefined && rps.fetchStatus !== 'idle') ||
+        (locations.isPending && locations.fetchStatus !== 'idle')),
+    /** Without the request rates there's no telling which regions serve, whatever else answered. */
+    error: status.error ?? (!status.unavailable && rps.data === undefined ? rps.error : null),
+    refetch: () => Promise.all([status.refetch(), locations.refetch()]),
+  };
 }
 
 // ── Compute ──────────────────────────────────────────────────────────────

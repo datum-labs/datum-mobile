@@ -1,6 +1,6 @@
 import { Card, CardContent, CardField, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
   CategoryBarChart,
@@ -27,6 +27,7 @@ import {
   formatRps,
   formatShortNumber,
   metricRangePreset,
+  type WafRuleRow as WafRuleRowData,
 } from '@/lib/metrics';
 import { useHttpProxy } from '@/resources/http-proxies/queries';
 import { STATUS_CLASSES, WAF_OUTCOMES, useAlbMetrics, type WafOutcome } from '@/resources/metrics/queries';
@@ -38,6 +39,38 @@ const regionRps = (rps: number) => (rps > 0 && rps < 0.001 ? '<0.001 req/s' : fo
 
 const fmtOr = (value: number | null | undefined, format: (v: number) => string) =>
   value === null || value === undefined ? undefined : format(value);
+
+/** One rule: its CRS name, id, category and action, with events and share of all rule events. */
+function WafRuleRow({ rule, first }: { rule: WafRuleRowData; first: boolean }) {
+  const t = useDatumTheme();
+  const detail = [rule.category, rule.actions.join(', ')].filter(Boolean).join(' · ');
+  return (
+    <View
+      style={[styles.ruleRow, !first && { borderTopColor: t.colors.border, borderTopWidth: StyleSheet.hairlineWidth }]}
+      accessible
+      accessibilityLabel={`${rule.name}, rule ${rule.ruleId}${detail ? `, ${detail}` : ''}: ${formatCount(rule.events)} events, ${Math.round(rule.share * 100)}%`}>
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Text size="sm" weight="medium" numberOfLines={2}>
+          {rule.name}
+        </Text>
+        <Text size="xs" tone="muted" numberOfLines={1}>
+          <Text size="xs" tone="muted" mono>
+            {rule.ruleId}
+          </Text>
+          {detail ? ` · ${detail}` : ''}
+        </Text>
+      </View>
+      <View style={{ alignItems: 'flex-end', gap: 2 }}>
+        <Text size="sm" weight="semibold" style={styles.tabular}>
+          {formatCount(rule.events)}
+        </Text>
+        <Text size="xs" tone="muted" style={styles.tabular}>
+          {`${Math.round(rule.share * 100)}%`}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 export default function AlbMetrics() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -184,6 +217,24 @@ export default function AlbMetrics() {
                   </MetricCard>
                 ) : null}
 
+                {data.waf ? (
+                  <MetricCard
+                    title="Top WAF rules"
+                    caption={data.wafRules.find((rule) => rule.version)?.version ?? rangeLabel}>
+                    {data.wafRules.length > 0 ? (
+                      <View>
+                        {data.wafRules.map((rule, i) => (
+                          <WafRuleRow key={rule.ruleId} rule={rule} first={i === 0} />
+                        ))}
+                      </View>
+                    ) : (
+                      <Text size="sm" tone="muted">
+                        No rules triggered in this window.
+                      </Text>
+                    )}
+                  </MetricCard>
+                ) : null}
+
                 {data.regions.length > 1 ? (
                   <Section title="Regions · average requests/s">
                     <Card size="sm" sectioned>
@@ -211,3 +262,8 @@ export default function AlbMetrics() {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 9 },
+  tabular: { fontVariant: ['tabular-nums'] },
+});

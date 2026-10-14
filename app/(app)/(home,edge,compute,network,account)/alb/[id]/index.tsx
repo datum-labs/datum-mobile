@@ -1,8 +1,10 @@
 import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
+import { AlbActiveRegions } from '@/components/alb/AlbActiveRegions';
 import { AlbHealthCard } from '@/components/alb/AlbHealthCard';
+import { AlbKpiStrip } from '@/components/alb/AlbKpiStrip';
 import { WafCategoriesRow } from '@/components/alb/WafCategoriesRow';
 import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
@@ -224,6 +226,15 @@ export default function AlbDetail() {
               status={proxy.view}
             />
             <AlbHealthCard health={albHealth(proxy, { workloadMissing })} />
+            {projectId ? (
+              <Section title="Last hour">
+                <AlbKpiStrip
+                  projectId={projectId}
+                  proxyName={proxy.name}
+                  onPress={() => router.push(`/alb/${encodeURIComponent(proxy.name)}/metrics`)}
+                />
+              </Section>
+            ) : null}
 
             <Section title="Observability">
               <ResourceRow
@@ -309,6 +320,12 @@ export default function AlbDetail() {
                 ]}
               />
             </Section>
+
+            {projectId ? (
+              <Section title="Regions">
+                <AlbActiveRegions projectId={projectId} proxyName={proxy.name} />
+              </Section>
+            ) : null}
 
             <Section title="Security & WAF">
               <InfoCard
