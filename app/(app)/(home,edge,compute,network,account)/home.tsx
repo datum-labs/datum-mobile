@@ -14,7 +14,7 @@ import type Animated from 'react-native-reanimated';
 import { StyleSheet, View } from 'react-native';
 
 import { PATCH_ICON } from '@/components/assistant/askPatch';
-import { HomeHero, type HomeHeroSummary } from '@/components/HomeHero';
+import { HomeHero, HomeHeroPanel, type HomeHeroSummary } from '@/components/HomeHero';
 import { HomeNetworks } from '@/components/HomeNetworks';
 import { Icon } from '@/components/Icon';
 import { ResourceRow } from '@/components/ResourceRow';
@@ -194,6 +194,7 @@ export default function Home() {
               headerHeight={headerHeight}
               scrollY={scrollY}
             />
+            <HomeHeroPanel>
             <HomeNetworks projectId={projectId} />
             <View style={styles.grid}>
               {tiles.map((tile, i) => (
@@ -241,6 +242,7 @@ export default function Home() {
                 </Card>
               ) : null}
             </Section>
+            </HomeHeroPanel>
           </>
         )}
       </Screen>

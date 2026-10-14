@@ -1,5 +1,4 @@
-import { Text, useDatumTheme, withAlpha } from '@datum-cloud/datum-ui-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -30,7 +29,8 @@ export interface HomeHeroSummary {
 
 /**
  * Home's header artwork: the project name in Canela on the illustration's
- * night sky, with the scene below fading into the page. It sits under the
+ * night sky, with the scene running full-bleed to its bottom edge, where
+ * `HomeHeroPanel` (the page content) overlaps it with rounded corners. It sits under the
  * transparent nav bar (`headerHeight` above the title), moves at half speed
  * as the page scrolls and stretches on pull-to-refresh.
  *
@@ -77,7 +77,10 @@ export function HomeHero({
     <View
       style={[styles.root, { height: height + SCREEN_PAD_TOP, marginTop: -headerHeight - SCREEN_PAD_TOP }]}
       accessibilityRole="header">
-      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: HERO_SKY }, art]}>
+      {/* Clip at the hero's bottom edge (the scene mustn't slide under the
+          content below), but leave room above for the pull-down stretch. */}
+      <View pointerEvents="none" style={styles.clip}>
+      <Animated.View style={[styles.layer, { height: height + SCREEN_PAD_TOP, backgroundColor: HERO_SKY }, art]}>
         <Animated.Image
           source={ART}
           resizeMode="cover"
@@ -85,11 +88,7 @@ export function HomeHero({
           style={[styles.art, { width, height: artHeight }]}
         />
       </Animated.View>
-      <LinearGradient
-        pointerEvents="none"
-        colors={[withAlpha(t.colors.background, 0), t.colors.background]}
-        style={styles.fade}
-      />
+      </View>
       <Animated.View style={[styles.text, { top: headerHeight + SCREEN_PAD_TOP + 4 }, text]}>
         <Text
           numberOfLines={1}
@@ -125,7 +124,8 @@ export function HomeHero({
 const styles = StyleSheet.create({
   root: { marginHorizontal: -16, overflow: 'visible' },
   art: { position: 'absolute', bottom: 0, left: 0 },
-  fade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 72 },
+  clip: { position: 'absolute', left: 0, right: 0, bottom: 0, top: -2000, overflow: 'hidden' },
+  layer: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   text: { position: 'absolute', left: 20, right: 20, gap: 8 },
   title: { color: '#fff', fontSize: 40, lineHeight: 46 },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -141,4 +141,38 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.2)',
   },
   dot: { width: 7, height: 7, borderRadius: 4 },
+});
+
+/** How far the content panel overlaps the bottom of the artwork. */
+const PANEL_OVERLAP = 28;
+/** Screen's gap between children, which the overlap also has to swallow. */
+const SCREEN_GAP = 20;
+
+/**
+ * The page content under the hero, on a panel with large continuous top
+ * corners that rides up over the artwork, like a sheet over a photo.
+ */
+export function HomeHeroPanel({ children }: { children: React.ReactNode }) {
+  const t = useDatumTheme();
+  return (
+    <View
+      style={[
+        panelStyles.panel,
+        { backgroundColor: t.colors.background, marginTop: -(PANEL_OVERLAP + SCREEN_GAP) },
+      ]}>
+      {children}
+    </View>
+  );
+}
+
+const panelStyles = StyleSheet.create({
+  panel: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+    paddingTop: 22,
+    gap: 20,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    borderCurve: 'continuous',
+  },
 });
