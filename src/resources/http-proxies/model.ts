@@ -124,6 +124,24 @@ export interface WafView {
   paranoia?: { blocking?: number; detection?: number };
 }
 
+/**
+ * The portal's names for OWASP CRS paranoia levels ("Sensitivity"), from
+ * cloud-portal `getParanoiaLevelLabel`. Unknown or unset reads as Relaxed,
+ * the CRS default.
+ */
+export function sensitivityLabel(level?: number): string {
+  switch (level) {
+    case 2:
+      return 'Balanced';
+    case 3:
+      return 'Strict';
+    case 4:
+      return 'Maximum';
+    default:
+      return 'Relaxed';
+  }
+}
+
 function getMode(policy: RawTrafficProtectionPolicy | undefined): TrafficProtectionMode | undefined {
   const mode = policy?.spec?.mode;
   return mode === 'Observe' || mode === 'Enforce' || mode === 'Disabled' ? mode : undefined;

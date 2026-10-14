@@ -26,7 +26,7 @@ import {
 } from '@/lib/status/http-proxy-conditions';
 import type { StatusView } from '@/lib/status/types';
 import type { HttpProxy, HttpProxyBackend } from '@/resources/http-proxies/model';
-import { wafStatusView } from '@/resources/http-proxies/model';
+import { sensitivityLabel, wafStatusView } from '@/resources/http-proxies/model';
 import { useHttpProxy, useProxyWaf } from '@/resources/http-proxies/queries';
 
 function certView(status: HostnameStatusLike | undefined): StatusView {
@@ -243,7 +243,7 @@ export default function AlbDetail() {
               )}
             </Section>
 
-            <Section title="Web application firewall">
+            <Section title="Security & WAF">
               <InfoCard
                 rows={[
                   {
@@ -257,11 +257,16 @@ export default function AlbDetail() {
                     ),
                   },
                   waf.data?.mode ? { label: 'Mode', value: waf.data.mode } : null,
-                  waf.data?.paranoia?.blocking
-                    ? { label: 'Blocking paranoia', value: `PL${waf.data.paranoia.blocking}` }
+                  // Named like the portal's "Sensitivity" (OWASP CRS paranoia level).
+                  waf.data?.mode && waf.data.mode !== 'Disabled'
+                    ? { label: 'Sensitivity', value: sensitivityLabel(waf.data.paranoia?.blocking) }
                     : null,
-                  waf.data?.paranoia?.detection
-                    ? { label: 'Detection paranoia', value: `PL${waf.data.paranoia.detection}` }
+                  // The portal keeps detection equal to blocking; only call it out when it differs.
+                  waf.data?.mode &&
+                  waf.data.mode !== 'Disabled' &&
+                  waf.data.paranoia?.detection &&
+                  waf.data.paranoia.detection !== (waf.data.paranoia.blocking ?? 1)
+                    ? { label: 'Also logging', value: sensitivityLabel(waf.data.paranoia.detection) }
                     : null,
                   wafView?.detail ? { label: 'Status', value: wafView.detail } : null,
                 ]}
@@ -274,6 +279,7 @@ export default function AlbDetail() {
                   { label: 'Name', value: proxy.name, mono: true },
                   {
                     label: 'Default hostname',
+                    stacked: true,
                     value: proxy.canonicalHostname ? (
                       <HostnameLink hostname={proxy.canonicalHostname} size="sm" />
                     ) : undefined,

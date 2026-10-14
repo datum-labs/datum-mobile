@@ -1,6 +1,10 @@
 import { impactHaptic, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Button, Host, Menu } from '@expo/ui/swift-ui';
+import { labelStyle, tint } from '@expo/ui/swift-ui/modifiers';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import * as Linking from 'expo-linking';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Share, StyleSheet, View } from 'react-native';
 
 import { hostnameUrl, isOpenableHostname } from '@/lib/hostnames';
 
@@ -16,9 +20,40 @@ export async function openHostname(hostname: string) {
   }
 }
 
+async function copyHostname(hostname: string) {
+  await Clipboard.setStringAsync(hostname);
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+}
+
+/** Native ⋯ menu: open, copy and share a hostname (copy only for wildcards). */
+function HostnameMenu({ hostname, openable }: { hostname: string; openable: boolean }) {
+  const t = useDatumTheme();
+  return (
+    <Host matchContents colorScheme={t.scheme}>
+      <Menu
+        label={`Actions for ${hostname}`}
+        systemImage="ellipsis.circle"
+        modifiers={[labelStyle('iconOnly'), tint(t.colors.primary)]}>
+        {openable ? (
+          <Button label="Open in Browser" systemImage="safari" onPress={() => void openHostname(hostname)} />
+        ) : null}
+        <Button label="Copy Hostname" systemImage="doc.on.doc" onPress={() => void copyHostname(hostname)} />
+        {openable ? (
+          <Button
+            label="Share…"
+            systemImage="square.and.arrow.up"
+            onPress={() => void Share.share({ url: hostnameUrl(hostname) }).catch(() => undefined)}
+          />
+        ) : null}
+      </Menu>
+    </Host>
+  );
+}
+
 /**
- * A hostname that opens over HTTPS in the user's default browser. Wildcards
- * render as plain selectable text with a "Wildcard" hint instead.
+ * A hostname that opens over HTTPS in the user's default browser, with a ⋯
+ * menu to open, copy or share it. Wildcards can't be opened, so they show a
+ * "Wildcard" hint and only offer Copy.
  */
 export function HostnameLink({
   hostname,
@@ -37,39 +72,40 @@ export function HostnameLink({
       numberOfLines={1}
       ellipsizeMode="middle"
       selectable={!openable}
-      style={[styles.label, openable ? { color: t.colors.foreground } : undefined]}>
+      style={[styles.label, { color: openable ? t.colors.primary : t.colors.foreground }]}>
       {hostname}
     </Text>
   );
 
-  if (!openable) {
-    return (
-      <View style={styles.row}>
-        <Icon name="asterisk" size={14} color={t.colors.mutedForeground} />
-        {label}
-        <Text size="xs" tone="muted">
-          Wildcard
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <PressableScale
-      onPress={() => void openHostname(hostname)}
-      accessibilityRole="link"
-      accessibilityLabel={`Open ${hostname}`}
-      accessibilityHint="Opens in your default browser"
-      haptic={false}
-      style={styles.row}>
-      <Icon name="link" size={14} color={t.colors.primary} />
-      {label}
-      <Icon name="arrow.up.right.square" size={16} color={t.colors.primary} />
-    </PressableScale>
+    <View style={styles.row}>
+      {openable ? (
+        <PressableScale
+          onPress={() => void openHostname(hostname)}
+          accessibilityRole="link"
+          accessibilityLabel={`Open ${hostname}`}
+          accessibilityHint="Opens in your default browser"
+          haptic={false}
+          style={styles.main}>
+          <Icon name="globe" size={14} color={t.colors.mutedForeground} />
+          {label}
+        </PressableScale>
+      ) : (
+        <View style={styles.main}>
+          <Icon name="asterisk" size={14} color={t.colors.mutedForeground} />
+          {label}
+          <Text size="xs" tone="muted">
+            Wildcard
+          </Text>
+        </View>
+      )}
+      <HostnameMenu hostname={hostname} openable={openable} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 32 },
-  label: { flex: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 32, alignSelf: 'stretch' },
+  main: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
+  label: { flexShrink: 1 },
 });
