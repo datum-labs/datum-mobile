@@ -580,8 +580,15 @@ commands: the shell runs as you.
 The app also builds for Android with Material 3: the same screens, with
 Compose (`@expo/ui/jetpack-compose`) where iOS uses SwiftUI, Material Symbols
 for SF Symbols (`src/lib/icons/material.ts`), and `*.android.tsx` variants
-where a component differs. Not yet on Android: Connect this phone (VPN),
-widgets/Quick Settings tiles, and Play distribution.
+where a component differs. Not yet on Android: widgets/Quick Settings tiles
+and Play distribution.
+
+Connect this phone works through `modules/datum-vpn/android`: a `VpnService`
+driving the same Rust CONNECT-IP (MASQUE) core as iOS. Build the core first with
+`scripts/build-connect-core-android.sh` (needs `cargo install cargo-ndk`). The
+emulator's network can't make a direct UDP path, so Connect falls back to the
+iroh relay, whose 1160-byte path is below IPv6's 1280 minimum and the session
+retries; test the tunnel on a real phone.
 
 Toolchain (once): `brew install openjdk@17 && brew install --cask android-commandlinetools`, then
 `sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006" "cmake;3.22.1" "emulator" "system-images;android-36;google_apis_playstore;arm64-v8a"`

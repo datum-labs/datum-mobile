@@ -56,3 +56,7 @@ coverage/
 
 # Instance shell client (scripts/build-console-wasm.sh, scripts/build-console-web.mjs output)
 /assets/console/
+
+# Gradle output of local Expo modules
+modules/*/android/build/
+modules/*/android/.cxx/

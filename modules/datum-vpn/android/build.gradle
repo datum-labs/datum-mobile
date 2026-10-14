@@ -1,0 +1,33 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'net.datum'
+version = '0.1.0'
+
+// The Datum Connect core (native/connect-core): the .so and its UniFFI Kotlin
+// bindings, built by scripts/build-connect-core-android.sh (gitignored).
+def coreOut = new File(projectDir, '../../../native/connect-core/build/android')
+
+android {
+  namespace "net.datum.vpn"
+  defaultConfig {
+    versionCode 1
+    versionName '0.1.0'
+  }
+  sourceSets {
+    main {
+      jniLibs.srcDirs += new File(coreOut, 'jniLibs')
+      java.srcDirs += new File(coreOut, 'kotlin')
+    }
+  }
+}
+
+dependencies {
+  implementation "androidx.core:core-ktx:1.17.0"
+  // UniFFI's Kotlin bindings load the core through JNA.
+  implementation "net.java.dev.jna:jna:5.17.0@aar"
+  // Lease renewal needs PATCH, which HttpURLConnection doesn't do.
+  implementation "com.squareup.okhttp3:okhttp:4.12.0"
+}

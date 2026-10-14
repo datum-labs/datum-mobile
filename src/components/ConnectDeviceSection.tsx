@@ -1,12 +1,11 @@
 import { Button, Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { Host, Toggle } from '@expo/ui/swift-ui';
-import { disabled } from '@expo/ui/swift-ui/modifiers';
 import { useEffect, useRef } from 'react';
 import { Alert, Platform, View } from 'react-native';
 
-import { unavailableCopy } from '@/resources/connect/model';
+import { THIS_DEVICE, unavailableCopy } from '@/resources/connect/model';
 import { useConnectThisDevice } from '@/resources/connect/queries';
 
+import { ConnectToggle } from './ConnectToggle';
 import { InfoCard } from './InfoCard';
 import { Notice } from './Notice';
 import { Section } from './Section';
@@ -70,7 +69,7 @@ export function ConnectDeviceSection({
   const confirmDisconnect = () =>
     Alert.alert(
       `Disconnect from ${displayName}?`,
-      'This iPhone leaves the network and its access to the VPC is removed.',
+      `This ${Platform.OS === 'android' ? 'phone' : 'iPhone'} leaves the network and its access to the VPC is removed.`,
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Disconnect', style: 'destructive', onPress: () => device.disconnect() },
@@ -83,15 +82,7 @@ export function ConnectDeviceSection({
     <Section title={SECTION_TITLE}>
       <Card size="sm">
         <CardContent style={{ gap: 10 }}>
-          <Host matchContents={{ vertical: true }} style={{ alignSelf: 'stretch' }}>
-            <Toggle
-              isOn={view.on}
-              label="Connect this iPhone"
-              systemImage="iphone.gen3.radiowaves.left.and.right"
-              onIsOnChange={onToggle}
-              modifiers={[disabled(view.busy || waiting)]}
-            />
-          </Host>
+          <ConnectToggle isOn={view.on} disabled={view.busy || waiting} onChange={onToggle} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <StatusBadge
               status={waiting ? 'pending' : view.badge.status}
@@ -99,7 +90,7 @@ export function ConnectDeviceSection({
             />
             {waiting ? (
               <Text size="sm" tone="muted" style={{ flex: 1 }}>
-                Setting up the network. This iPhone joins as soon as it&apos;s ready.
+                Setting up the network. {THIS_DEVICE[0].toUpperCase() + THIS_DEVICE.slice(1)} joins as soon as it&apos;s ready.
               </Text>
             ) : view.detail ? (
               <Text size="sm" tone="muted" mono={view.phase === 'connected'} numberOfLines={2} selectable style={{ flex: 1 }}>

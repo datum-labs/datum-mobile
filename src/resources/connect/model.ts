@@ -1,4 +1,7 @@
 import { Platform } from 'react-native';
+
+/** What the UI calls this device. */
+export const THIS_DEVICE = Platform.OS === 'android' ? 'this phone' : 'this iPhone';
 import type { BadgeStatus } from '@/lib/status/types';
 
 import type { JoinResult, JoinStage } from './control-plane';
@@ -56,7 +59,7 @@ const STAGE_COPY: Record<JoinStage, string> = {
   activation: 'Enabling Connect for this project…',
   location: 'Finding the nearest Datum location…',
   gateway: 'Preparing the VPC gateway…',
-  connector: 'Registering this iPhone…',
+  connector: `Registering ${THIS_DEVICE}…`,
   binding: 'Requesting access to the network…',
   'gateway-starting': 'Starting the VPC gateway. This can take a few minutes…',
   ready: 'Opening the tunnel…',
@@ -148,9 +151,8 @@ export function isActive(status: VpnState['status'] | undefined): boolean {
 export function unavailableCopy(availability: VpnAvailability): { title: string; description: string } {
   if (Platform.OS === 'android') {
     return {
-      title: 'Coming to Android',
-      description:
-        'Connecting a phone to a VPC is iPhone-only for now. The Android version of the Datum Connect tunnel is on its way.',
+      title: 'Needs a newer build',
+      description: 'This build of the app doesn’t include Datum Connect. Install the latest build to connect this phone.',
     };
   }
   if (availability.reason === 'simulator') {

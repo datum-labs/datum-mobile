@@ -45,7 +45,7 @@ pub(crate) struct Validated {
 
 fn invalid(message: impl Into<String>) -> ConnectError {
     ConnectError::InvalidConfig {
-        message: message.into(),
+        detail: message.into(),
     }
 }
 

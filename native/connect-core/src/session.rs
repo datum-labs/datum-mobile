@@ -219,7 +219,7 @@ pub(crate) fn start(
     let valid = config::validate(&config)?;
     if tokio::runtime::Handle::try_current().is_ok() {
         return Err(ConnectError::InvalidConfig {
-            message: "start_session must not be called from a transport thread".into(),
+            detail: "start_session must not be called from a transport thread".into(),
         });
     }
     runtime().block_on(async move {
@@ -278,7 +278,7 @@ async fn bind(valid: &Validated) -> Result<Transport, ConnectError> {
     }
     let transport = Transport::bind(transport_config).await.map_err(|error| {
         ConnectError::RelayUnavailable {
-            message: format!("could not open the Connect endpoint: {error}"),
+            detail: format!("could not open the Connect endpoint: {error}"),
         }
     })?;
     if tokio::time::timeout(RELAY_TIMEOUT, transport.endpoint().online())
@@ -287,7 +287,7 @@ async fn bind(valid: &Validated) -> Result<Transport, ConnectError> {
     {
         transport.shutdown().await;
         return Err(ConnectError::RelayUnavailable {
-            message: "Could not connect to a Connect relay within 15 seconds. Check the network connection and try again.".into(),
+            detail: "Could not connect to a Connect relay within 15 seconds. Check the network connection and try again.".into(),
         });
     }
     Ok(transport)
@@ -320,7 +320,7 @@ async fn connect_verified(
     )
     .await
     .map_err(|_| ConnectError::Timeout {
-        message: "CONNECT-IP gateway setup timed out".into(),
+        detail: "CONNECT-IP gateway setup timed out".into(),
     })?
     .map_err(|error| {
         tracing::warn!(network = %valid.network, connector = %connector, peer = %valid.gateway, %error,
@@ -338,7 +338,7 @@ async fn connect_verified(
             stage = "connect_ip_grant_mismatch", "gateway grant differs from the binding");
         session.cancel();
         return Err(ConnectError::GrantMismatch {
-            message: "Gateway IP assignment or routes differ from the approved binding; nothing was connected. Disconnect and connect again to pick up the gateway's current assignment.".into(),
+            detail: "Gateway IP assignment or routes differ from the approved binding; nothing was connected. Disconnect and connect again to pick up the gateway's current assignment.".into(),
         });
     }
     Ok(session)
@@ -356,7 +356,7 @@ fn retryable(error: &ip::Error) -> bool {
 fn handshake_error(network: &str, connector: &str, error: ip::Error) -> ConnectError {
     match error {
         ip::Error::DatagramsUnsupported => ConnectError::DatagramsUnsupported {
-            message: format!(
+            detail: format!(
                 "Cannot join network {network:?}: the connection does not support QUIC DATAGRAM. CONNECT-IP has no reliable-stream fallback."
             ),
         },
@@ -364,7 +364,7 @@ fn handshake_error(network: &str, connector: &str, error: ip::Error) -> ConnectE
             required,
             available,
         } => ConnectError::DatagramMtuInsufficient {
-            message: format!(
+            detail: format!(
                 "Cannot join network {network:?}: the approved IP MTU is {required} bytes, but this path can carry only {available} IP bytes per QUIC datagram."
             ),
         },
@@ -374,7 +374,7 @@ fn handshake_error(network: &str, connector: &str, error: ip::Error) -> ConnectE
             session_id,
         } if status.as_u16() == 403 && reason == ip::RejectionReason::PeerNetworkNotApproved => {
             ConnectError::GatewayApprovalRequired {
-                message: format!(
+                detail: format!(
                     "The gateway has no approval for network {network:?} and Connector {connector}. Diagnostic session_id: {session_id}"
                 ),
             }
@@ -384,28 +384,28 @@ fn handshake_error(network: &str, connector: &str, error: ip::Error) -> ConnectE
             reason,
             session_id,
         } => ConnectError::Handshake {
-            message: format!(
+            detail: format!(
                 "The gateway rejected CONNECT-IP for network {network:?} (HTTP {}, reason: {reason}). Diagnostic session_id: {session_id}",
                 status.as_u16()
             ),
         },
         ip::Error::Rejected(status) if status.as_u16() == 403 => {
             ConnectError::GatewayApprovalRequired {
-                message: format!(
+                detail: format!(
                     "The gateway has not approved network {network:?} for Connector {connector} yet."
                 ),
             }
         }
         ip::Error::Rejected(status) if status.as_u16() == 503 => ConnectError::GatewaySetupFailed {
-            message: format!(
+            detail: format!(
                 "The gateway could not prepare its attachment for network {network:?}."
             ),
         },
         ip::Error::Timeout => ConnectError::Timeout {
-            message: "CONNECT-IP gateway setup timed out".into(),
+            detail: "CONNECT-IP gateway setup timed out".into(),
         },
         error => ConnectError::Handshake {
-            message: format!("CONNECT-IP setup for network {network:?} failed: {error}"),
+            detail: format!("CONNECT-IP setup for network {network:?} failed: {error}"),
         },
     }
 }

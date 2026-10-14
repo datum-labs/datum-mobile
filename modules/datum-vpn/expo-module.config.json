@@ -1,6 +1,9 @@
 {
-  "platforms": ["apple"],
+  "platforms": ["apple", "android"],
   "apple": {
     "modules": ["DatumVpnModule"]
+  },
+  "android": {
+    "modules": ["net.datum.vpn.DatumVpnModule"]
   }
 }

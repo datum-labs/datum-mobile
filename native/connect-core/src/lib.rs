@@ -82,24 +82,24 @@ pub struct SessionStatus {
 
 #[derive(Debug, Clone, thiserror::Error, uniffi::Error)]
 pub enum ConnectError {
-    #[error("{message}")]
-    InvalidConfig { message: String },
-    #[error("{message}")]
-    RelayUnavailable { message: String },
-    #[error("{message}")]
-    DatagramsUnsupported { message: String },
-    #[error("{message}")]
-    DatagramMtuInsufficient { message: String },
-    #[error("{message}")]
-    GatewayApprovalRequired { message: String },
-    #[error("{message}")]
-    GatewaySetupFailed { message: String },
-    #[error("{message}")]
-    GrantMismatch { message: String },
-    #[error("{message}")]
-    Handshake { message: String },
-    #[error("{message}")]
-    Timeout { message: String },
+    #[error("{detail}")]
+    InvalidConfig { detail: String },
+    #[error("{detail}")]
+    RelayUnavailable { detail: String },
+    #[error("{detail}")]
+    DatagramsUnsupported { detail: String },
+    #[error("{detail}")]
+    DatagramMtuInsufficient { detail: String },
+    #[error("{detail}")]
+    GatewayApprovalRequired { detail: String },
+    #[error("{detail}")]
+    GatewaySetupFailed { detail: String },
+    #[error("{detail}")]
+    GrantMismatch { detail: String },
+    #[error("{detail}")]
+    Handshake { detail: String },
+    #[error("{detail}")]
+    Timeout { detail: String },
     #[error("the session is stopped")]
     Stopped,
 }
@@ -149,7 +149,7 @@ pub fn public_key_for(secret_key: Vec<u8>) -> Result<String, ConnectError> {
             .as_slice()
             .try_into()
             .map_err(|_| ConnectError::InvalidConfig {
-                message: "the Connector secret key must be exactly 32 bytes".into(),
+                detail: "the Connector secret key must be exactly 32 bytes".into(),
             })?;
     Ok(iroh::SecretKey::from_bytes(&key).public().to_string())
 }

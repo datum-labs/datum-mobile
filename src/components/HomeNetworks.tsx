@@ -5,7 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { describeError } from '@/api';
-import { isActive } from '@/resources/connect/model';
+import { isActive, THIS_DEVICE } from '@/resources/connect/model';
 import { useVpnState } from '@/resources/connect/queries';
 import { connectService } from '@/resources/connect/service';
 import { useNetworks } from '@/resources/networks/queries';
@@ -43,7 +43,7 @@ export function NewNetworkCard({ index = 0, prominent = false }: { index?: numbe
           </Text>
           <Text size="xs" tone="muted">
             {prominent
-              ? 'Create a VPC for your workloads and connect this iPhone to it.'
+              ? `Create a VPC for your workloads and connect ${THIS_DEVICE} to it.`
               : 'Create a VPC and connect straight away.'}
           </Text>
         </View>
