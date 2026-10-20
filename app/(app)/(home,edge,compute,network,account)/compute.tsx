@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
-import { View } from 'react-native';
 
+import { RowGroup } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
@@ -47,7 +47,7 @@ export default function ComputeIndex() {
               description: 'Workloads you deploy to this project show up here.',
             }}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((w, i) => (
                   <ResourceRow
                     key={w.uid}
@@ -65,7 +65,7 @@ export default function ComputeIndex() {
                     href={`/workloads/${encodeURIComponent(w.name)}`}
                   />
                 ))}
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         ) : (
@@ -74,7 +74,7 @@ export default function ComputeIndex() {
             isEmpty={(d) => d.length === 0}
             empty={{ title: 'No instances', description: 'Instances appear once a workload is placed.' }}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((inst, i) => (
                   <ResourceRow
                     key={inst.uid}
@@ -87,7 +87,7 @@ export default function ComputeIndex() {
                     href={`/instances/${encodeURIComponent(inst.name)}`}
                   />
                 ))}
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         )}

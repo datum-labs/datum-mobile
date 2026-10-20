@@ -1,4 +1,4 @@
-import { Card, CardContent, Spinner, Text, useDatumTheme, withAlpha } from '@datum-cloud/datum-ui-native';
+import { CardContent, Spinner, Text, useDatumTheme, withAlpha } from '@datum-cloud/datum-ui-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { StyleSheet, View } from 'react-native';
@@ -7,6 +7,7 @@ import type { AlbHealth } from '@/resources/http-proxies/config';
 
 import { Icon } from '../Icon';
 import { PressableScale } from '../PressableScale';
+import { Card } from '@/components/Grouped';
 
 const ICONS = {
   success: 'checkmark.circle.fill',

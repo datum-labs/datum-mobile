@@ -1,4 +1,4 @@
-import { Button, Spinner, StatusBadge, Text, useDatumTheme, withAlpha } from '@datum-cloud/datum-ui-native';
+import { Button, Spinner, Text, useDatumTheme, withAlpha } from '@datum-cloud/datum-ui-native';
 import * as Haptics from 'expo-haptics';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
@@ -28,6 +28,7 @@ import { consoleService } from '@/resources/console/service';
 import { ShellKeyBar } from './ShellKeyBar';
 import { ShellTerminal, useTerminalBridge } from './ShellTerminal';
 import { useToolbarIcon } from '@/lib/icons/toolbar';
+import { StatusLabel } from '@/components/Grouped';
 
 /** Route params: `command` picks the shell; `devRun`/`devKeyboard` are DEV ONLY (headless runs). */
 export type InstanceShellParams = {
@@ -83,7 +84,7 @@ function ShellTitle({ name, state }: { name: string; state?: ShellState }) {
       <Text weight="semibold" numberOfLines={1} style={styles.titleText}>
         {name}
       </Text>
-      {pill ? <StatusBadge status={pill.status} label={pill.label} /> : null}
+      {pill ? <StatusLabel status={pill.status} label={pill.label} /> : null}
     </View>
   );
 }

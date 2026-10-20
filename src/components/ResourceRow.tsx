@@ -1,12 +1,13 @@
-import { StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { impactHaptic, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Link, type Href } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
-import type { ReactNode } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import type { ReactNode, Ref } from 'react';
+import { Platform, Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 import Animated, { FadeInDown, LinearTransition } from 'react-native-reanimated';
 
 import type { StatusView } from '@/lib/status/types';
 
+import { GROUPED_RADIUS, StatusLabel, useInRowGroup } from './Grouped';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
@@ -28,23 +29,25 @@ export interface ResourceRowProps {
 
 function RowBody({ title, subtitle, meta, icon, status, trailing, href }: ResourceRowProps) {
   const t = useDatumTheme();
+  const grouped = useInRowGroup();
   return (
     <View
       style={[
         styles.row,
-        { backgroundColor: t.colors.card, borderColor: t.colors.cardBorder, borderRadius: 16 },
+        // In a RowGroup the group draws the surface.
+        grouped ? null : { backgroundColor: t.colors.card, borderRadius: GROUPED_RADIUS, borderCurve: 'continuous' },
       ]}>
       {icon ? (
         <View style={[styles.iconWell, { backgroundColor: t.colors.accent }]}>
-          <Icon name={icon} size={18} color={t.colors.primary} />
+          <Icon name={icon} size={17} color={t.colors.primary} />
         </View>
       ) : null}
       <View style={styles.text}>
-        <Text size="base" weight="medium" numberOfLines={1}>
+        <Text size="base" numberOfLines={1}>
           {title}
         </Text>
         {subtitle ? (
-          <Text size="xs" tone="muted" numberOfLines={1}>
+          <Text size="sm" tone="muted" numberOfLines={1}>
             {subtitle}
           </Text>
         ) : null}
@@ -56,16 +59,49 @@ function RowBody({ title, subtitle, meta, icon, status, trailing, href }: Resour
       </View>
       <View style={styles.trailing}>
         {trailing}
-        {status ? <StatusBadge status={status.status} label={status.label} /> : null}
-        {href ? <Icon name="chevron.right" size={13} color={t.colors.mutedForeground} /> : null}
+        {status ? <StatusLabel status={status.status} label={status.label} /> : null}
+        {href ? <Icon name="chevron.right" size={13} weight="semibold" color={t.colors.mutedForeground} /> : null}
       </View>
     </View>
   );
 }
 
+/** Grouped rows highlight while pressed, like a table cell; standalone rows press-scale. */
+// Link asChild hands its onPress (and ref) to this, so pass the props through.
+function RowPress({
+  label,
+  children,
+  onPress,
+  ...rest
+}: Omit<PressableProps, 'children'> & { label: string; children: ReactNode; ref?: Ref<View> }) {
+  const t = useDatumTheme();
+  const grouped = useInRowGroup();
+  if (!grouped) {
+    return (
+      <PressableScale {...rest} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
+        {children}
+      </PressableScale>
+    );
+  }
+  return (
+    <Pressable
+      {...rest}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={(e) => {
+        impactHaptic('light');
+        onPress?.(e);
+      }}
+      style={({ pressed }) => (pressed ? { backgroundColor: t.colors.muted } : null)}>
+      {children}
+    </Pressable>
+  );
+}
+
 /**
- * A list row as a card. With `href` it pushes the detail screen using the
- * iOS 18+ zoom transition from this row (Link.AppleZoom).
+ * A list row: inside a RowGroup it's a table cell, otherwise its own card.
+ * With `href` it pushes the detail screen using the iOS 18+ zoom transition
+ * from this row (Link.AppleZoom).
  */
 export function ResourceRow(props: ResourceRowProps) {
   // The zoom transition is iOS 18+ only; Android pushes with the standard Material motion.
@@ -78,16 +114,16 @@ export function ResourceRow(props: ResourceRowProps) {
       {href && zoom ? (
         <Link href={href} asChild>
           <Link.AppleZoom>
-            <PressableScale accessibilityRole="button" accessibilityLabel={props.title}>
+            <RowPress label={props.title}>
               <RowBody {...props} />
-            </PressableScale>
+            </RowPress>
           </Link.AppleZoom>
         </Link>
       ) : href ? (
         <Link href={href} asChild>
-          <PressableScale accessibilityRole="button" accessibilityLabel={props.title}>
+          <RowPress label={props.title}>
             <RowBody {...props} />
-          </PressableScale>
+          </RowPress>
         </Link>
       ) : (
         <RowBody {...props} />
@@ -102,18 +138,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderCurve: 'continuous',
+    paddingVertical: 11,
+    minHeight: 60,
   },
   iconWell: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: { flex: 1, gap: 2 },
-  trailing: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 },
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0, maxWidth: '45%' },
 });

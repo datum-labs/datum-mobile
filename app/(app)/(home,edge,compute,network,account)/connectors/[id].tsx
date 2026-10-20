@@ -1,4 +1,4 @@
-import { StatusBadge } from '@datum-cloud/datum-ui-native';
+import {  } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { DetailHeader } from '@/components/DetailHeader';
@@ -9,6 +9,7 @@ import { ErrorState, RowSkeletons } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { formatDate } from '@/lib/format';
 import { useConnector } from '@/resources/connectors/queries';
+import { StatusLabel } from '@/components/Grouped';
 
 export default function ConnectorDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,7 +58,7 @@ export default function ConnectorDetail() {
                 <InfoCard
                   rows={connector.capabilities.map((cap) => ({
                     label: cap.type,
-                    value: <StatusBadge status={cap.view.status} label={cap.enabled ? cap.view.label : 'Disabled'} />,
+                    value: <StatusLabel status={cap.view.status} label={cap.enabled ? cap.view.label : 'Disabled'} />,
                   }))}
                 />
               </Section>

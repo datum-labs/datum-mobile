@@ -1,10 +1,11 @@
-import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
+import { Card, RowGroup, StatusLabel } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
@@ -78,6 +79,7 @@ export default function WorkloadDetail() {
 
             {albs.data && albs.data.length > 0 ? (
               <Section title="Load balancer">
+                  <RowGroup>
                 {albs.data.map((alb, i) => (
                   <ResourceRow
                     key={alb.proxyName}
@@ -89,7 +91,8 @@ export default function WorkloadDetail() {
                     href={`/alb/${encodeURIComponent(alb.proxyName)}`}
                   />
                 ))}
-              </Section>
+                  </RowGroup>
+                </Section>
             ) : null}
 
             {workload.placementRegions.length > 0 ? (
@@ -117,7 +120,7 @@ export default function WorkloadDetail() {
                         <Text size="sm" mono>
                           {region.readyReplicas}/{region.desiredReplicas}
                         </Text>
-                        <StatusBadge status={HEALTH_STATUS[region.health]} label={region.health} />
+                        <StatusLabel status={HEALTH_STATUS[region.health]} label={region.health} />
                       </View>
                     ))}
                   </CardContent>
@@ -127,6 +130,7 @@ export default function WorkloadDetail() {
 
             {deployments.data && deployments.data.length > 0 ? (
               <Section title="Deployments">
+                  <RowGroup>
                 {deployments.data.map((d, i) => (
                   <ResourceRow
                     key={d.uid}
@@ -139,10 +143,12 @@ export default function WorkloadDetail() {
                     status={d.view}
                   />
                 ))}
-              </Section>
+                  </RowGroup>
+                </Section>
             ) : null}
 
             <Section title="Observability">
+              <RowGroup>
               <ResourceRow
                 icon="chart.xyaxis.line"
                 title="Metrics"
@@ -164,6 +170,7 @@ export default function WorkloadDetail() {
                 }
                 href={`/workloads/${encodeURIComponent(workload.name)}/logs`}
               />
+              </RowGroup>
             </Section>
 
             <Section title="Instances">
@@ -173,18 +180,20 @@ export default function WorkloadDetail() {
                     No instances yet.
                   </Text>
                 ) : (
-                  instances.data.map((inst, i) => (
-                    <ResourceRow
-                      key={inst.uid}
-                      index={i}
-                      icon="cpu"
-                      title={inst.name}
-                      subtitle={inst.location}
-                      meta={inst.externalIP ?? inst.internalIP}
-                      status={instanceView(inst)}
-                      href={`/instances/${encodeURIComponent(inst.name)}`}
-                    />
-                  ))
+                  <RowGroup>
+                    {instances.data.map((inst, i) => (
+                      <ResourceRow
+                        key={inst.uid}
+                        index={i}
+                        icon="cpu"
+                        title={inst.name}
+                        subtitle={inst.location}
+                        meta={inst.externalIP ?? inst.internalIP}
+                        status={instanceView(inst)}
+                        href={`/instances/${encodeURIComponent(inst.name)}`}
+                      />
+                    ))}
+                  </RowGroup>
                 )
               ) : instances.error ? (
                 <ErrorState error={instances.error} onRetry={() => void instances.refetch()} />

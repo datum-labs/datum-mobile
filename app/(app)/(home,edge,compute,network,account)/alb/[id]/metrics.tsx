@@ -1,4 +1,4 @@
-import { Card, CardContent, CardField, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, CardField, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -31,6 +31,7 @@ import {
 } from '@/lib/metrics';
 import { useHttpProxy } from '@/resources/http-proxies/queries';
 import { STATUS_CLASSES, WAF_OUTCOMES, useAlbMetrics, type WafOutcome } from '@/resources/metrics/queries';
+import { Card } from '@/components/Grouped';
 
 const WAF_LABELS: Record<WafOutcome, string> = { allowed: 'Allowed', blocked: 'Blocked', dropped: 'Dropped' };
 

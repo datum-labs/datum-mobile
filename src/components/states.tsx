@@ -1,4 +1,4 @@
-import { Button, Skeleton, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Button, Skeleton, Text } from '@datum-cloud/datum-ui-native';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import type { ReactNode } from 'react';
@@ -7,6 +7,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { describeError } from '@/api/errors';
 
+import { RowGroup } from './Grouped';
 import { Notice } from './Notice';
 
 /**
@@ -16,26 +17,22 @@ import { Notice } from './Notice';
  */
 export const EMPTY_STATE_ART = require('@/assets/images/scenes/explorers.png') as ImageSourcePropType;
 
-/** Placeholder rows shaped like ResourceRow, shimmering while data loads. */
+/** Placeholder rows shaped like a RowGroup of ResourceRows, shimmering while data loads. */
 export function RowSkeletons({ count = 5 }: { count?: number }) {
-  const t = useDatumTheme();
   return (
-    <View style={{ gap: 8 }} accessibilityLabel="Loading">
-      {Array.from({ length: count }, (_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.skeletonRow,
-            { backgroundColor: t.colors.card, borderColor: t.colors.cardBorder },
-          ]}>
-          <Skeleton width={36} height={36} radius={10} />
-          <View style={{ flex: 1, gap: 6 }}>
-            <Skeleton width="55%" height={14} />
-            <Skeleton width="35%" height={10} />
+    <View accessibilityLabel="Loading">
+      <RowGroup>
+        {Array.from({ length: count }, (_, i) => (
+          <View key={i} style={styles.skeletonRow}>
+            <Skeleton width={34} height={34} radius={9} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton width="55%" height={14} />
+              <Skeleton width="35%" height={10} />
+            </View>
+            <Skeleton width={56} height={14} radius={7} />
           </View>
-          <Skeleton width={64} height={20} radius={10} />
-        </View>
-      ))}
+        ))}
+      </RowGroup>
     </View>
   );
 }
@@ -152,9 +149,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 12,
-    borderRadius: 16,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    minHeight: 60,
   },
 });

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardField, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, CardField, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -8,6 +8,7 @@ import type { Condition } from '@/resources/shared';
 
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
+import { Card, StatusLabel } from './Grouped';
 
 export type InfoRow =
   | {
@@ -144,7 +145,7 @@ export function ConditionsCard({
                       <Text size="sm" weight="medium">
                         {c.type}
                       </Text>
-                      <StatusBadge status={conditionStatus(c)} label={c.reason || c.status} />
+                      <StatusLabel status={conditionStatus(c)} label={c.reason || c.status} />
                     </View>
                   }
                   value={

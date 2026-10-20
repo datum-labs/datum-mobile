@@ -1,4 +1,4 @@
-import { Card, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { router, Stack, useIsFocused, useLocalSearchParams, type Href } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import { StatusBar } from 'expo-status-bar';
@@ -17,6 +17,7 @@ import { PATCH_ICON } from '@/components/assistant/askPatch';
 import { HomeHero, HomeHeroPanel, type HomeHeroSummary } from '@/components/HomeHero';
 import { HomeNetworks } from '@/components/HomeNetworks';
 import { Icon } from '@/components/Icon';
+import { Card, RowGroup } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
@@ -223,18 +224,20 @@ export default function Home() {
             </View>
             <Section title="Needs attention">
               {attention.length > 0 ? (
-                attention.map((item, i) => (
-                  <ResourceRow
-                    key={item.key}
-                    index={i}
-                    title={item.title}
-                    subtitle={item.subtitle}
-                    icon={item.icon}
-                    status={item.view}
-                    href={item.path as Href}
-                    zoom={false}
-                  />
-                ))
+                <RowGroup>
+                  {attention.map((item, i) => (
+                    <ResourceRow
+                      key={item.key}
+                      index={i}
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      icon={item.icon}
+                      status={item.view}
+                      href={item.path as Href}
+                      zoom={false}
+                    />
+                  ))}
+                </RowGroup>
               ) : allLoaded ? (
                 <Card size="sm">
                   <CardContent style={styles.healthy}>
@@ -260,6 +263,6 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', margin: -6 },
   healthy: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

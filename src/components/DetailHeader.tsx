@@ -1,4 +1,4 @@
-import { StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Link } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
@@ -7,6 +7,7 @@ import { StyleSheet, View, Platform } from 'react-native';
 import type { StatusView } from '@/lib/status/types';
 
 import { Icon } from './Icon';
+import { StatusLabel } from './Grouped';
 
 /**
  * Metadata line under a detail screen's large title: icon, status and the
@@ -44,7 +45,7 @@ export function DetailHeader({
             </View>
           ) : null}
           <View style={styles.body}>
-            {status ? <StatusBadge status={status.status} label={status.label} /> : null}
+            {status ? <StatusLabel status={status.status} label={status.label} /> : null}
             {subtitle ? (
               <Text size="sm" tone="muted" mono numberOfLines={1} ellipsizeMode="middle" selectable>
                 {subtitle}

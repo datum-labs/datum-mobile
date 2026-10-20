@@ -1,4 +1,4 @@
-import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -13,6 +13,7 @@ import { useProjectId } from '@/context/ProjectContext';
 import { pluralize } from '@/lib/format';
 import type { DnsRecord } from '@/resources/dns/service';
 import { useDnsRecords, useDnsZone } from '@/resources/dns/queries';
+import { Card, StatusLabel } from '@/components/Grouped';
 
 function RecordRow({ record, last }: { record: DnsRecord; last: boolean }) {
   const t = useDatumTheme();
@@ -32,7 +33,7 @@ function RecordRow({ record, last }: { record: DnsRecord; last: boolean }) {
           {record.name}
         </Text>
         {record.view.status !== 'success' ? (
-          <StatusBadge status={record.view.status} label={record.view.label} />
+          <StatusLabel status={record.view.status} label={record.view.label} />
         ) : null}
       </View>
       <Text size="xs" tone="muted" mono selectable numberOfLines={4}>

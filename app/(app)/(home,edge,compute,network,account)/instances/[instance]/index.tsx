@@ -3,6 +3,7 @@ import { router, Stack, useLocalSearchParams, type Href } from 'expo-router';
 import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
+import { RowGroup } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
@@ -55,6 +56,7 @@ export default function InstanceDetail() {
               status={instanceView(instance)}
             />
             <Section title="Observability">
+              <RowGroup>
               <ResourceRow
                 icon="chart.xyaxis.line"
                 title="Metrics"
@@ -68,6 +70,7 @@ export default function InstanceDetail() {
                 subtitle="Console output from this instance"
                 href={`/instances/${encodeURIComponent(instance.name)}/logs`}
               />
+              </RowGroup>
             </Section>
             <Section title="Placement">
               <InfoCard

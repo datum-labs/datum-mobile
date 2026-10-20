@@ -1,4 +1,4 @@
-import { Button, Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Button, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { useEffect, useRef } from 'react';
 import { Alert, Platform, View } from 'react-native';
 
@@ -9,6 +9,7 @@ import { ConnectToggle } from './ConnectToggle';
 import { InfoCard } from './InfoCard';
 import { Notice } from './Notice';
 import { Section } from './Section';
+import { Card, StatusLabel } from './Grouped';
 
 /**
  * "Connect this iPhone" on a Network: a native toggle that joins this device
@@ -84,7 +85,7 @@ export function ConnectDeviceSection({
         <CardContent style={{ gap: 10 }}>
           <ConnectToggle isOn={view.on} disabled={view.busy || waiting} onChange={onToggle} />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <StatusBadge
+            <StatusLabel
               status={waiting ? 'pending' : view.badge.status}
               label={waiting ? 'Waiting' : view.badge.label}
             />

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardField, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, CardField, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Share, StyleSheet, View } from 'react-native';
 
@@ -21,6 +21,7 @@ import {
 } from '@/lib/logs';
 import { isLogsForbidden, useAlbLogEntry } from '@/resources/logs/queries';
 import { useToolbarIcon } from '@/lib/icons/toolbar';
+import { Card } from '@/components/Grouped';
 
 /** Plain-text copy of the whole entry for the share sheet (which offers Copy). */
 function entryAsText(entry: AccessLogEntry): string {

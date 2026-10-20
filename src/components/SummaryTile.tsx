@@ -1,10 +1,11 @@
-import { Skeleton, StatusBadge, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { Skeleton, Text, Title, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import type { SymbolViewProps } from 'expo-symbols';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { rollupView, type StatusRollup } from '@/lib/status/views';
 
+import { groupedSurface, StatusLabel } from './Grouped';
 import { Icon } from './Icon';
 import { PressableScale } from './PressableScale';
 
@@ -34,10 +35,10 @@ export function SummaryTile({
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${counts?.total ?? 'loading'}`}
-        style={[styles.tile, { backgroundColor: t.colors.card, borderColor: t.colors.cardBorder }]}>
+        style={[styles.tile, { backgroundColor: t.colors.card }]}>
         <View style={styles.head}>
-          <Icon name={icon} size={17} color={t.colors.primary} />
-          <Text size="sm" weight="medium" tone="muted" numberOfLines={1} style={{ flex: 1 }}>
+          <Icon name={icon} size={16} color={t.colors.primary} />
+          <Text size="sm" weight="semibold" numberOfLines={1} style={{ flex: 1 }}>
             {label}
           </Text>
         </View>
@@ -52,9 +53,7 @@ export function SummaryTile({
         )}
         <View style={{ minHeight: 22, justifyContent: 'center' }}>
           {view && counts && counts.total > 0 ? (
-            <View style={{ alignSelf: 'flex-start' }}>
-              <StatusBadge status={view.status} label={view.label} />
-            </View>
+            <StatusLabel status={view.status} label={view.label} />
           ) : failed ? (
             <Text size="xs" tone="muted">
               Unavailable
@@ -71,13 +70,13 @@ export function SummaryTile({
 }
 
 const styles = StyleSheet.create({
-  cell: { width: '50%', padding: 5 },
+  cell: { width: '50%', padding: 6 },
   tile: {
-    borderRadius: 18,
-    borderCurve: 'continuous',
-    borderWidth: StyleSheet.hairlineWidth,
-    padding: 14,
-    gap: 8,
+    ...groupedSurface,
+    borderRadius: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 6,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 8 },
 });

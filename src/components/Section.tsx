@@ -2,7 +2,7 @@ import { Text } from '@datum-cloud/datum-ui-native';
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
-/** Grouped block with a small caps heading, like an inset table section. */
+/** Grouped block with a bold sentence-case heading, as iOS 26 system apps title their sections. */
 export function Section({
   title,
   action,
@@ -18,8 +18,8 @@ export function Section({
     <View style={[styles.section, style]}>
       {title ? (
         <View style={styles.header}>
-          <Text size="xs" weight="semibold" tone="muted" style={styles.title}>
-            {title.toUpperCase()}
+          <Text size="lg" weight="semibold" accessibilityRole="header" style={styles.title}>
+            {title}
           </Text>
           {action}
         </View>
@@ -30,13 +30,13 @@ export function Section({
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 8 },
+  section: { gap: 10 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
   },
-  title: { letterSpacing: 0.6 },
+  title: { flexShrink: 1 },
   body: { gap: 8 },
 });

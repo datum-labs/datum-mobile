@@ -1,8 +1,8 @@
 import { useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack } from 'expo-router';
-import { View } from 'react-native';
 
 import { Icon } from '@/components/Icon';
+import { RowGroup } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
@@ -58,7 +58,7 @@ export default function EdgeIndex() {
               description: 'ALBs you create in Datum Cloud show up here.',
             }}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((proxy, i) => (
                   <ResourceRow
                     key={proxy.uid}
@@ -76,7 +76,7 @@ export default function EdgeIndex() {
                     href={`/alb/${encodeURIComponent(proxy.name)}`}
                   />
                 ))}
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         ) : segment === 'domains' ? (
@@ -88,7 +88,7 @@ export default function EdgeIndex() {
               description: 'Verified domains let your ALBs serve custom hostnames.',
             }}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((domain, i) => (
                   <ResourceRow
                     key={domain.uid}
@@ -100,7 +100,7 @@ export default function EdgeIndex() {
                     href={`/domains/${encodeURIComponent(domain.name)}`}
                   />
                 ))}
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         ) : (
@@ -112,7 +112,7 @@ export default function EdgeIndex() {
               description: 'Zones hosted on Datum DNS appear here with their records.',
             }}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((zone, i) => (
                   <ResourceRow
                     key={zone.uid}
@@ -126,7 +126,7 @@ export default function EdgeIndex() {
                     href={`/dns/${encodeURIComponent(zone.name)}`}
                   />
                 ))}
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         )}

@@ -1,7 +1,7 @@
 import { router, Stack } from 'expo-router';
-import { View } from 'react-native';
 
 import { NewNetworkCard } from '@/components/HomeNetworks';
+import { RowGroup } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Segmented } from '@/components/Segmented';
@@ -49,7 +49,7 @@ export default function NetworkIndex() {
           <QueryView
             query={networks}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((n, i) => (
                   <ResourceRow
                     key={n.uid}
@@ -65,7 +65,7 @@ export default function NetworkIndex() {
                   />
                 ))}
                 <NewNetworkCard index={items.length} prominent={items.length === 0} />
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         ) : (
@@ -77,7 +77,7 @@ export default function NetworkIndex() {
               description: 'Datum Desktop and datum-connect devices show up here once registered.',
             }}>
             {(items) => (
-              <View style={{ gap: 8 }}>
+              <RowGroup>
                 {items.map((c, i) => (
                   <ResourceRow
                     key={c.uid}
@@ -89,7 +89,7 @@ export default function NetworkIndex() {
                     href={`/connectors/${encodeURIComponent(c.name)}`}
                   />
                 ))}
-              </View>
+              </RowGroup>
             )}
           </QueryView>
         )}

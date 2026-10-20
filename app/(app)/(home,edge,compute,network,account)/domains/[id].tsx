@@ -1,4 +1,4 @@
-import { Card, CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
@@ -11,6 +11,7 @@ import { ErrorState, RowSkeletons } from '@/components/states';
 import { useProjectId } from '@/context/ProjectContext';
 import { formatDate } from '@/lib/format';
 import { useDomain } from '@/resources/domains/queries';
+import { Card } from '@/components/Grouped';
 
 export default function DomainDetail() {
   const t = useDatumTheme();

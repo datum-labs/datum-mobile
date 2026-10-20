@@ -105,11 +105,11 @@ export function HomeHero({
           ) : null}
           {summary && dot ? (
             <View style={styles.pill}>
-              {summary.tone === 'success' ? (
-                <Icon name="checkmark.circle.fill" size={12} color={dot} />
-              ) : (
-                <View style={[styles.dot, { backgroundColor: dot }]} />
-              )}
+              <Icon
+                name={summary.tone === 'success' ? 'checkmark.circle.fill' : 'exclamationmark.circle.fill'}
+                size={13}
+                color={dot}
+              />
               <Text size="xs" weight="medium" style={{ color: '#fff' }}>
                 {summary.label}
               </Text>
@@ -140,7 +140,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.2)',
   },
-  dot: { width: 7, height: 7, borderRadius: 4 },
 });
 
 /** How far the content panel overlaps the bottom of the artwork. */

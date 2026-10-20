@@ -1,4 +1,4 @@
-import { Card, CardContent, StatusBadge, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
+import { CardContent, Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
@@ -10,6 +10,7 @@ import { ASK_PATCH, askPatchAbout } from '@/components/assistant/askPatch';
 import { DetailHeader } from '@/components/DetailHeader';
 import { HostnameLink, openHostname } from '@/components/HostnameLink';
 import { ConditionsCard, InfoCard } from '@/components/InfoCard';
+import { Card, RowGroup, StatusLabel } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
 import { Screen } from '@/components/Screen';
 import { Section } from '@/components/Section';
@@ -102,7 +103,7 @@ function CheckRow({ label, view }: { label: string; view: StatusView }) {
         <Text size="sm" tone="muted">
           {label}
         </Text>
-        <StatusBadge status={view.status} label={view.label} />
+        <StatusLabel status={view.status} label={view.label} />
       </View>
       {view.detail && view.status !== 'success' ? (
         <Text size="xs" tone="muted" selectable>
@@ -239,6 +240,7 @@ export default function AlbDetail() {
             ) : null}
 
             <Section title="Observability">
+              <RowGroup>
               <ResourceRow
                 icon="chart.xyaxis.line"
                 title="Metrics"
@@ -259,6 +261,7 @@ export default function AlbDetail() {
                 subtitle="Changes in the last 7 days"
                 href={`/alb/${encodeURIComponent(proxy.name)}/activity`}
               />
+              </RowGroup>
             </Section>
 
             {proxy.hostnames.length > 0 ? (
@@ -275,33 +278,35 @@ export default function AlbDetail() {
                   No backends configured.
                 </Text>
               ) : (
-                poolRows(proxy.backends).map((row, i) => (
-                  <ResourceRow
-                    key={`${row.backend.kind}/${i}`}
-                    index={i}
-                    icon={
-                      row.backend.kind === 'connector'
-                        ? 'cable.connector'
-                        : row.backend.kind === 'endpoint'
-                          ? 'server.rack'
-                          : 'shippingbox.fill'
-                    }
-                    title={backendTitle(row.backend)}
-                    subtitle={`${BACKEND_LABEL[row.backend.kind]} · ${row.transport}`}
-                    trailing={
-                      proxy.backends.length > 1 ? (
-                        <Text size="sm" weight="medium" tone={row.weight === 0 ? 'muted' : undefined}>
-                          {row.share}
-                        </Text>
-                      ) : undefined
-                    }
-                    href={
-                      row.backend.kind === 'connector' && row.backend.connector
-                        ? `/connectors/${encodeURIComponent(row.backend.connector)}`
-                        : undefined
-                    }
-                  />
-                ))
+                <RowGroup>
+                  {poolRows(proxy.backends).map((row, i) => (
+                    <ResourceRow
+                      key={`${row.backend.kind}/${i}`}
+                      index={i}
+                      icon={
+                        row.backend.kind === 'connector'
+                          ? 'cable.connector'
+                          : row.backend.kind === 'endpoint'
+                            ? 'server.rack'
+                            : 'shippingbox.fill'
+                      }
+                      title={backendTitle(row.backend)}
+                      subtitle={`${BACKEND_LABEL[row.backend.kind]} · ${row.transport}`}
+                      trailing={
+                        proxy.backends.length > 1 ? (
+                          <Text size="sm" weight="medium" tone={row.weight === 0 ? 'muted' : undefined}>
+                            {row.share}
+                          </Text>
+                        ) : undefined
+                      }
+                      href={
+                        row.backend.kind === 'connector' && row.backend.connector
+                          ? `/connectors/${encodeURIComponent(row.backend.connector)}`
+                          : undefined
+                      }
+                    />
+                  ))}
+                </RowGroup>
               )}
               <InfoCard
                 rows={[
@@ -335,7 +340,7 @@ export default function AlbDetail() {
                   {
                     label: 'Protection',
                     value: wafView ? (
-                      <StatusBadge status={wafView.status} label={wafView.label} />
+                      <StatusLabel status={wafView.status} label={wafView.label} />
                     ) : waf.error ? (
                       '—'
                     ) : (
