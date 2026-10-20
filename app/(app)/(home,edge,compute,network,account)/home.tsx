@@ -16,6 +16,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { PATCH_ICON } from '@/components/assistant/askPatch';
 import { HomeHero, HomeHeroPanel, type HomeHeroSummary } from '@/components/HomeHero';
 import { HomeNetworks } from '@/components/HomeNetworks';
+import { HomeSearchField } from '@/components/HomeSearchField';
 import { Icon } from '@/components/Icon';
 import { Card, RowGroup } from '@/components/Grouped';
 import { ResourceRow } from '@/components/ResourceRow';
@@ -205,6 +206,7 @@ export default function Home() {
               scrollY={scrollY}
             />
             <HomeHeroPanel>
+            <HomeSearchField projectName={selection?.projectName} />
             <HomeNetworks projectId={projectId} />
             <View style={styles.grid}>
               {tiles.map((tile, i) => (
