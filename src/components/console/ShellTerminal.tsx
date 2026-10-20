@@ -45,8 +45,10 @@ export interface TerminalBridge {
   port: TerminalPort;
   webRef: RefObject<WebViewHandle | null>;
   onMessage(data: string): void;
-  /** The page is gone (crash or failed load): fail the session and reload. */
+  /** The page is gone (crash or failed load): fail the session. */
   onLost(message: string): void;
+  /** The page's process was killed: reload it (at most once a minute; else on the next send). */
+  onCrashed(): void;
 }
 
 /**
@@ -60,6 +62,10 @@ export function useTerminalBridge(): TerminalBridge {
     ready: false,
     queue: [] as ToTerminal[],
     listeners: new Set<(message: FromTerminal) => void>(),
+    /** When the page last reloaded itself after its process was killed. */
+    lastCrashReload: 0,
+    /** The page is dead and waits for the next message (Reconnect) to reload. */
+    reloadOnSend: false,
   });
 
   const port = useMemo<TerminalPort>(
@@ -68,6 +74,10 @@ export function useTerminalBridge(): TerminalBridge {
         const b = bridge.current;
         if (b.ready && webRef.current) webRef.current.injectJavaScript(injectionFor(message));
         else b.queue.push(message);
+        if (b.reloadOnSend) {
+          b.reloadOnSend = false;
+          webRef.current?.reload();
+        }
       },
       subscribe(listener) {
         bridge.current.listeners.add(listener);
@@ -107,8 +117,27 @@ export function useTerminalBridge(): TerminalBridge {
     [emit]
   );
 
-  return { port, webRef, onMessage, onLost };
+  /**
+   * WebKit killed the page's process (usually memory: it holds a 17 MB wasm).
+   * Reload it once so Reconnect works; if it dies again within a minute,
+   * reloading straight away would just recompile the wasm and die again, so
+   * wait until the user asks to reconnect.
+   */
+  const onCrashed = useCallback(() => {
+    const b = bridge.current;
+    const now = Date.now();
+    if (now - b.lastCrashReload < CRASH_RELOAD_WINDOW_MS) {
+      b.reloadOnSend = true;
+      return;
+    }
+    b.lastCrashReload = now;
+    webRef.current?.reload();
+  }, []);
+
+  return { port, webRef, onMessage, onLost, onCrashed };
 }
+
+const CRASH_RELOAD_WINDOW_MS = 60_000;
 
 /**
  * The terminal page in a WebView, loaded from the app bundle. The theme is
@@ -123,7 +152,7 @@ export function ShellTerminal({
   theme: TerminalTheme;
   style?: StyleProp<ViewStyle>;
 }) {
-  const { webRef, onMessage, onLost } = bridge;
+  const { webRef, onMessage, onLost, onCrashed } = bridge;
   // The initial theme only; later changes go over the bridge (setTheme).
   const [initialTheme] = useState(theme);
   const beforeLoad = useMemo(
@@ -147,7 +176,7 @@ export function ShellTerminal({
       onMessage={(event: { nativeEvent: { data: string } }) => onMessage(event.nativeEvent.data)}
       onContentProcessDidTerminate={() => {
         onLost(TERMINAL_STOPPED);
-        webRef.current?.reload();
+        onCrashed();
       }}
       onError={() => onLost(CLIENT_MISSING)}
       keyboardDisplayRequiresUserAction={false}

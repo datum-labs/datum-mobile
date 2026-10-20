@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import { HTTP_PROXY_PROVISIONING_POLL_MS } from '@/lib/status/http-proxy-provisioning';
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import { toHttpProxy, toHttpProxyList, toWafView } from './model';
 import { httpProxyService } from './service';
@@ -37,19 +37,21 @@ export function useProxyDescription(projectId: string | undefined, name: string 
 }
 
 export function useHttpProxies(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: httpProxyKeys.list(projectId ?? ''),
     queryFn: ({ signal }) => httpProxyService.list(projectId as string, signal),
     select: toHttpProxyList,
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useHttpProxy(projectId: string | undefined, name: string | undefined) {
-  const live = useLiveRefetchInterval();
+  const { refetchInterval: live, subscribed } = useLiveQuery();
   return useQuery({
+    subscribed,
     queryKey: httpProxyKeys.detail(projectId ?? '', name ?? ''),
     queryFn: ({ signal }) => httpProxyService.get(projectId as string, name as string, signal),
     select: toHttpProxy,
@@ -64,12 +66,13 @@ export function useHttpProxy(projectId: string | undefined, name: string | undef
 }
 
 export function useTrafficProtectionPolicies(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: httpProxyKeys.wafList(projectId ?? ''),
     queryFn: ({ signal }) => httpProxyService.listTrafficProtectionPolicies(projectId as string, signal),
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
@@ -79,12 +82,13 @@ export function useProxyWaf(projectId: string | undefined, proxyName: string | u
     (data: Parameters<typeof toWafView>[0]) => toWafView(data, proxyName ?? ''),
     [proxyName]
   );
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: httpProxyKeys.wafList(projectId ?? ''),
     queryFn: ({ signal }) => httpProxyService.listTrafficProtectionPolicies(projectId as string, signal),
     select,
     enabled: !!projectId && !!proxyName,
     refetchInterval,
+    subscribed,
   });
 }

@@ -22,7 +22,7 @@ import {
   type LokiQueryRangeResponse,
   type LokiStream,
 } from '@/lib/logs';
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import { accessReviewService } from '../access-reviews/service';
 import { LOGS_ACCESS_REVIEWS, logsService } from './service';
@@ -109,8 +109,8 @@ export interface LogQueryOptions {
 }
 
 function useLogPolling(live: boolean | undefined) {
-  const interval = useLiveRefetchInterval(LOG_LIVE_POLL_MS);
-  return live ? interval : false;
+  const { refetchInterval, subscribed } = useLiveQuery(LOG_LIVE_POLL_MS);
+  return { refetchInterval: live ? refetchInterval : false, subscribed };
 }
 
 /**
@@ -123,7 +123,7 @@ export function useAlbLogs(
   options: LogQueryOptions & { statusClass?: HttpStatusClass } = {}
 ) {
   const { range = DEFAULT_LOG_RANGE, search, live, enabled = true, limit = LOG_PAGE_LIMIT, statusClass } = options;
-  const refetchInterval = useLogPolling(live);
+  const { refetchInterval, subscribed } = useLogPolling(live);
   const query = proxyId ? buildAlbLogQL(proxyId, { statusClass }) : '';
   const select = useCallback(
     (response: LokiQueryRangeResponse): LogPage<AccessLogEntry> => {
@@ -139,6 +139,7 @@ export function useAlbLogs(
     select,
     enabled: enabled && !!projectId && !!proxyId,
     refetchInterval,
+    subscribed,
     staleTime: live ? 0 : 15_000,
     gcTime: LOGS_GC_MS,
     retry: retryLogs,
@@ -217,7 +218,7 @@ export function useInstanceLogs(
   options: LogQueryOptions = {}
 ) {
   const { range = DEFAULT_LOG_RANGE, search, live, enabled = true, limit = LOG_PAGE_LIMIT } = options;
-  const refetchInterval = useLogPolling(live);
+  const { refetchInterval, subscribed } = useLogPolling(live);
   const query = buildInstanceLogQL(instanceNames ?? []);
   const select = useCallback(
     (response: LokiQueryRangeResponse): LogPage<ConsoleLogEntry> => {
@@ -233,6 +234,7 @@ export function useInstanceLogs(
     select,
     enabled: enabled && !!projectId && !!query,
     refetchInterval,
+    subscribed,
     staleTime: live ? 0 : 15_000,
     gcTime: LOGS_GC_MS,
     retry: retryLogs,

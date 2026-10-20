@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import { domainService, toDomain, toDomainList } from './service';
 
@@ -11,23 +11,25 @@ export const domainKeys = {
 };
 
 export function useDomains(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: domainKeys.list(projectId ?? ''),
     queryFn: ({ signal }) => domainService.list(projectId as string, signal),
     select: toDomainList,
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useDomain(projectId: string | undefined, name: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: domainKeys.detail(projectId ?? '', name ?? ''),
     queryFn: ({ signal }) => domainService.get(projectId as string, name as string, signal),
     select: toDomain,
     enabled: !!projectId && !!name,
     refetchInterval,
+    subscribed,
   });
 }

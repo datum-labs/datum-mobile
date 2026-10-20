@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { describeError } from '@/api';
+import { useLiveQuery } from '@/lib/query';
 
 import { DatumVpn, type VpnState } from '../../../modules/datum-vpn';
 import { DatumWidgets } from '../../../modules/datum-widgets';
@@ -15,28 +16,35 @@ export const connectKeys = {
   vpn: () => [...connectKeys.all, 'vpn'] as const,
 };
 
+/** How often the focused screen re-reads the tunnel's counters while it's up. */
+const VPN_POLL_MS = 5_000;
+
 /** Token hand-off cadence while the tunnel is up and the app is active. */
 const TOKEN_SHARE_MS = 5 * 60_000;
 
 /** The tunnel's state: NEVPNStatus events plus the extension's own report. */
 export function useVpnState(enabled: boolean) {
   const client = useQueryClient();
+  // Each poll asks the extension for its report (an XPC round-trip that wakes
+  // it), so only the focused screen polls; status changes arrive as events.
+  const { refetchInterval: live, subscribed } = useLiveQuery(VPN_POLL_MS);
   const query = useQuery({
     queryKey: connectKeys.vpn(),
     queryFn: () => connectService.state(),
     enabled,
+    subscribed,
     // Counters and reconnect state come from the extension; poll while up.
-    refetchInterval: (q) => (isActive((q.state.data as VpnState | undefined)?.status) ? 5_000 : false),
+    refetchInterval: (q) => (live && isActive((q.state.data as VpnState | undefined)?.status) ? live : false),
     meta: { persist: false },
   });
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || !subscribed) return;
+    // Control Center is refreshed by useConnectControlSync (app-wide).
     const subscription = DatumVpn.onStatusChange(() => {
       void client.invalidateQueries({ queryKey: connectKeys.vpn() });
-      DatumWidgets.reloadControls();
     });
     return () => subscription.remove();
-  }, [client, enabled]);
+  }, [client, enabled, subscribed]);
   return query;
 }
 

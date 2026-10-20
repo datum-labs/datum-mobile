@@ -170,7 +170,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       ['expo-font', { fonts }],
       'expo-secure-store',
       'expo-web-browser',
-      ['expo-build-properties', { ios: { deploymentTarget: '26.0' } }],
+      [
+        'expo-build-properties',
+        {
+          // Expo's prebuilt module frameworks are tied to the Swift compiler
+          // they were built with (6.3.1 for SDK 57.0.x); Xcode 27.1's 6.4 can't
+          // import them, so build the modules from source.
+          ios: { deploymentTarget: '26.0', usePrecompiledModules: false },
+        },
+      ],
       // BGTaskScheduler identifier + processing mode for the widgets' background refresh.
       'expo-background-task',
       './plugins/with-scene-lifecycle',

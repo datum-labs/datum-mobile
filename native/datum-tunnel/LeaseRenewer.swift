@@ -3,10 +3,14 @@ import os
 
 /// Keeps the device's Connector live while the tunnel is up.
 ///
-/// Mirrors `datum-connectd`'s liveness task (`renew_connect_connector_liveness`
-/// every 10 s): read the Connector (it must still exist with this device's
-/// key), then set its Lease's `spec.renewTime`. The daemon GETs and PUTs the
-/// Lease; a JSON merge patch is the same write in one small request.
+/// Mirrors the desktop client's liveness task: read the Connector (it must
+/// still exist with this device's key), then set its Lease's
+/// `spec.renewTime`, every half lease duration (15 s for the default 30 s
+/// lease; datum-connect `heartbeat.rs` `renewal_interval`). The daemon GETs
+/// and PUTs the Lease; a JSON merge patch is the same write in one request.
+///
+/// After a 401/403 it stops sending requests until `renewSoon()` brings a
+/// fresh token, rather than retrying a request that can't succeed.
 ///
 /// It uses the user's access token, which the app keeps in the shared
 /// Keychain. If it expires while the app stays closed, renewal pauses (the
@@ -23,8 +27,17 @@ final class LeaseRenewer: @unchecked Sendable {
 
   private var lastRenewed: Date?
   private var lastError: String?
+  /// Set by a 401/403; cleared when the app hands over a token.
+  private var waitingForToken = false
+  private var interval = LeaseRenewer.interval(leaseSeconds: LeaseRenewer.defaultLeaseSeconds)
 
-  static let interval: TimeInterval = 10
+  /// The Lease's duration until its own spec says otherwise (as the desktop client assumes).
+  static let defaultLeaseSeconds = 30
+
+  /// Half the lease, at least 10 s.
+  static func interval(leaseSeconds: Int) -> TimeInterval {
+    max(10, TimeInterval(leaseSeconds) / 2)
+  }
 
   init(config: TunnelConfig, onRevoked: @escaping (String) -> Void) {
     self.config = config
@@ -40,7 +53,7 @@ final class LeaseRenewer: @unchecked Sendable {
     queue.async { [weak self] in
       guard let self else { return }
       let timer = DispatchSource.makeTimerSource(queue: self.queue)
-      timer.schedule(deadline: .now(), repeating: Self.interval, leeway: .seconds(1))
+      timer.schedule(deadline: .now(), repeating: self.interval, leeway: self.leeway)
       timer.setEventHandler { [weak self] in self?.tick() }
       self.timer = timer
       timer.resume()
@@ -57,7 +70,22 @@ final class LeaseRenewer: @unchecked Sendable {
 
   /// A fresh token arrived from the app.
   func renewSoon() {
-    queue.async { self.tick() }
+    queue.async {
+      self.waitingForToken = false
+      self.tick()
+    }
+  }
+
+  /// A fifth of the interval: lets the system coalesce the extension's wakeups.
+  private var leeway: DispatchTimeInterval { .milliseconds(Int(interval * 200)) }
+
+  /// Follow the Lease's own duration. On `queue`.
+  private func adopt(leaseSeconds: Int?) {
+    guard let leaseSeconds, leaseSeconds > 0 else { return }
+    let next = Self.interval(leaseSeconds: leaseSeconds)
+    guard next != interval else { return }
+    interval = next
+    timer?.schedule(deadline: .now() + next, repeating: next, leeway: leeway)
   }
 
   func snapshot() -> [String: Any] {
@@ -76,7 +104,7 @@ final class LeaseRenewer: @unchecked Sendable {
   }
 
   private func tick() {
-    guard !inFlight else { return }
+    guard !inFlight, !waitingForToken else { return }
     guard let tokenData = try? SharedKeychain.read(account: SharedKeychain.tokenAccount),
       let token = String(data: tokenData, encoding: .utf8), !token.isEmpty
     else {
@@ -87,10 +115,11 @@ final class LeaseRenewer: @unchecked Sendable {
     Task {
       defer { queue.async { self.inFlight = false } }
       do {
-        try await renew(token: token)
+        let leaseSeconds = try await renew(token: token)
         queue.async {
           self.lastRenewed = Date()
           self.lastError = nil
+          self.adopt(leaseSeconds: leaseSeconds)
         }
       } catch let error as RenewError {
         queue.async { self.lastError = error.message }
@@ -100,6 +129,7 @@ final class LeaseRenewer: @unchecked Sendable {
           onRevoked(message)
         case .unauthorized:
           log.warning("lease renewal unauthorized; waiting for a fresh token from the app")
+          queue.async { self.waitingForToken = true }
         case .failed(let message):
           log.warning("lease renewal failed: \(message, privacy: .public)")
         }
@@ -109,7 +139,8 @@ final class LeaseRenewer: @unchecked Sendable {
     }
   }
 
-  private func renew(token: String) async throws {
+  /// Renews the Lease; returns its `spec.leaseDurationSeconds` when known.
+  private func renew(token: String) async throws -> Int? {
     // The Connector must still exist with this device's key; deletion is
     // the revocation boundary.
     let connectorURL = "\(base)/apis/connect.datumapis.com/v1alpha1/namespaces/default/connectors/\(config.connectorName)"
@@ -128,15 +159,17 @@ final class LeaseRenewer: @unchecked Sendable {
     let name = (leaseRef as? String) ?? ((leaseRef as? [String: Any])?["name"] as? String)
     guard let name, !name.isEmpty else {
       // The controller creates the Lease after observing the Connector.
-      return
+      return nil
     }
     leaseName = name
     let leaseURL = "\(base)/apis/coordination.k8s.io/v1/namespaces/default/leases/\(name)"
     let body = try JSONSerialization.data(withJSONObject: ["spec": ["renewTime": Self.microTime(Date())]])
-    let (_, patchStatus) = try await request(
+    let (leaseData, patchStatus) = try await request(
       "PATCH", leaseURL, token: token, body: body, contentType: "application/merge-patch+json")
-    if patchStatus == 404 { return }
+    if patchStatus == 404 { return nil }
     try check(patchStatus)
+    let lease = (try? JSONSerialization.jsonObject(with: leaseData)) as? [String: Any]
+    return (lease?["spec"] as? [String: Any])?["leaseDurationSeconds"] as? Int
   }
 
   private func check(_ status: Int) throws {

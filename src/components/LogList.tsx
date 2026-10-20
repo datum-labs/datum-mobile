@@ -32,11 +32,8 @@ export function LogList<T extends { id: string }>({
   const handleRefresh = useCallback(async () => {
     if (!onRefresh) return;
     setRefreshing(true);
-    try {
-      await onRefresh();
-    } finally {
-      setRefreshing(false);
-    }
+    // .finally rather than try/finally, which React Compiler can't compile yet.
+    await Promise.resolve(onRefresh()).finally(() => setRefreshing(false));
   }, [onRefresh]);
 
   const rows = placeholder ? [] : data;

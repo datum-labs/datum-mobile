@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import { networkService, toNetwork, toNetworkList, type CreateNetworkInput } from './service';
 
@@ -11,13 +11,14 @@ export const networkKeys = {
 };
 
 export function useNetworks(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: networkKeys.list(projectId ?? ''),
     queryFn: ({ signal }) => networkService.list(projectId as string, signal),
     select: toNetworkList,
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
@@ -25,8 +26,9 @@ export function useNetworks(projectId: string | undefined) {
 const PENDING_REFETCH_MS = 2_000;
 
 export function useNetwork(projectId: string | undefined, name: string | undefined) {
-  const live = useLiveRefetchInterval();
+  const { refetchInterval: live, subscribed } = useLiveQuery();
   return useQuery({
+    subscribed,
     queryKey: networkKeys.detail(projectId ?? '', name ?? ''),
     queryFn: ({ signal }) => networkService.get(projectId as string, name as string, signal),
     select: toNetwork,

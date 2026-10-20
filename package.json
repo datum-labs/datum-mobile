@@ -75,5 +75,11 @@
     "build:assets": "sh scripts/build-assets.sh",
     "check": "pnpm typecheck && pnpm lint && pnpm test"
   },
-  "private": true
+  "private": true,
+  "reanimated": {
+    "staticFeatureFlags": {
+      "IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS": true,
+      "ANDROID_SYNCHRONOUSLY_UPDATE_UI_PROPS": true
+    }
+  }
 }

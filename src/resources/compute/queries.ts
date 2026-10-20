@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import {
   computeService,
@@ -34,19 +34,21 @@ export const instanceKeys = {
 };
 
 export function useWorkloads(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: workloadKeys.list(projectId ?? ''),
     queryFn: ({ signal }) => computeService.listWorkloads(projectId as string, signal),
     select: toWorkloadList,
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useWorkload(projectId: string | undefined, name: string | undefined) {
-  const live = useLiveRefetchInterval();
+  const { refetchInterval: live, subscribed } = useLiveQuery();
   return useQuery({
+    subscribed,
     queryKey: workloadKeys.detail(projectId ?? '', name ?? ''),
     queryFn: ({ signal }) => computeService.getWorkload(projectId as string, name as string, signal),
     select: toWorkload,
@@ -62,7 +64,7 @@ export function useWorkload(projectId: string | undefined, name: string | undefi
 }
 
 export function useWorkloadDeployments(projectId: string | undefined, workloadName: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   const select = useCallback(
     (items: RawWorkloadDeployment[]) =>
       items
@@ -77,22 +79,24 @@ export function useWorkloadDeployments(projectId: string | undefined, workloadNa
     select,
     enabled: !!projectId && !!workloadName,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useInstances(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: instanceKeys.list(projectId ?? ''),
     queryFn: ({ signal }) => computeService.listInstances(projectId as string, { signal }),
     select: toInstanceList,
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useWorkloadInstances(projectId: string | undefined, workloadName: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: instanceKeys.forWorkload(projectId ?? '', workloadName ?? ''),
     queryFn: ({ signal }) =>
@@ -100,22 +104,24 @@ export function useWorkloadInstances(projectId: string | undefined, workloadName
     select: toInstanceList,
     enabled: !!projectId && !!workloadName,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useInstance(projectId: string | undefined, name: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: instanceKeys.detail(projectId ?? '', name ?? ''),
     queryFn: ({ signal }) => computeService.getInstance(projectId as string, name as string, signal),
     select: toInstance,
     enabled: !!projectId && !!name,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useWorkloadAlbs(projectId: string | undefined, workloadName: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   const select = useCallback(
     (inputs: Awaited<ReturnType<typeof computeService.listAlbInputs>>) =>
       connectedAlbsForWorkload(inputs, workloadName ?? ''),
@@ -127,5 +133,6 @@ export function useWorkloadAlbs(projectId: string | undefined, workloadName: str
     select,
     enabled: !!projectId && !!workloadName,
     refetchInterval,
+    subscribed,
   });
 }

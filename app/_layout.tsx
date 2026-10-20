@@ -14,11 +14,12 @@ import { ProjectContextProvider, useProjectContext } from '@/context/ProjectCont
 import { useDevRouteScript } from '@/dev/useDevRouteScript';
 import {
   clearQueryCache,
+  NO_DEHYDRATE,
   PERSIST_BUSTER,
   PERSIST_MAX_AGE_MS,
   queryClient,
-  queryPersister,
-  shouldPersistQuery,
+  restoreOnlyPersister,
+  subscribeQueryPersistence,
   wireAppStateFocus,
 } from '@/lib/query';
 // Defines the widgets' background refresh task at startup (a no-op without its native modules).
@@ -139,16 +140,17 @@ export default function RootLayout() {
   // resolves immediately; it only does real work where they aren't embedded.
   useFonts(datumFonts);
   useEffect(() => wireAppStateFocus(), []);
+  useEffect(() => (cacheRestored ? subscribeQueryPersistence() : undefined), [cacheRestored]);
   return (
     <DatumThemeProvider scheme="system">
       <AuthProvider>
         <PersistQueryClientProvider
           client={queryClient}
           persistOptions={{
-            persister: queryPersister,
+            persister: restoreOnlyPersister,
             maxAge: PERSIST_MAX_AGE_MS,
             buster: PERSIST_BUSTER,
-            dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+            dehydrateOptions: NO_DEHYDRATE,
           }}
           onSuccess={() => setCacheRestored(true)}
           onError={() => setCacheRestored(true)}>

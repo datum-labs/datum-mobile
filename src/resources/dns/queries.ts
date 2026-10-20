@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import { dnsService, toDnsRecords, toDnsZone, toDnsZoneList } from './service';
 
@@ -16,34 +16,37 @@ export const dnsRecordKeys = {
 };
 
 export function useDnsZones(projectId: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: dnsZoneKeys.list(projectId ?? ''),
     queryFn: ({ signal }) => dnsService.listZones(projectId as string, signal),
     select: toDnsZoneList,
     enabled: !!projectId,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useDnsZone(projectId: string | undefined, name: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: dnsZoneKeys.detail(projectId ?? '', name ?? ''),
     queryFn: ({ signal }) => dnsService.getZone(projectId as string, name as string, signal),
     select: toDnsZone,
     enabled: !!projectId && !!name,
     refetchInterval,
+    subscribed,
   });
 }
 
 export function useDnsRecords(projectId: string | undefined, zone: string | undefined) {
-  const refetchInterval = useLiveRefetchInterval();
+  const { refetchInterval, subscribed } = useLiveQuery();
   return useQuery({
     queryKey: dnsRecordKeys.list(projectId ?? '', zone ?? ''),
     queryFn: ({ signal }) => dnsService.listRecordSets(projectId as string, zone as string, signal),
     select: toDnsRecords,
     enabled: !!projectId && !!zone,
     refetchInterval,
+    subscribed,
   });
 }

@@ -34,7 +34,7 @@ import {
   type RegionTrafficView,
   type WafRuleRow,
 } from '@/lib/metrics';
-import { useLiveRefetchInterval } from '@/lib/query';
+import { useLiveQuery } from '@/lib/query';
 
 import { useLocations } from './locations';
 import { isMetricsUnavailable, metricsSource } from './source';
@@ -63,6 +63,8 @@ interface MetricQueryOptions {
   enabled: boolean;
   /** Poll interval while focused (false when off). */
   interval: number | false;
+  /** Off while the screen isn't focused (see useLiveQuery). */
+  subscribed: boolean;
 }
 
 /**
@@ -70,7 +72,7 @@ interface MetricQueryOptions {
  * pull-to-refresh or a poll slides it forward. Polling stops once the
  * gateway says metrics aren't available.
  */
-function useMetricQuery({ kind, promql, range, step, enabled, interval }: MetricQueryOptions) {
+function useMetricQuery({ kind, promql, range, step, enabled, interval, subscribed }: MetricQueryOptions) {
   const refetchInterval = useCallback(
     (query: Query<PromResponse, Error>) => (isMetricsUnavailable(query.state.error) ? false : interval),
     [interval]
@@ -83,6 +85,7 @@ function useMetricQuery({ kind, promql, range, step, enabled, interval }: Metric
         : metricsSource.query(promql as string, { signal }),
     enabled: enabled && metricsSource.available && !!promql,
     refetchInterval,
+    subscribed,
     placeholderData: keepPreviousData,
     staleTime: 15_000,
     gcTime: METRICS_GC_MS,
@@ -191,13 +194,13 @@ export function percentilesView(response: PromResponse | undefined): AlbMetrics[
  * range. Polls every 30 s while the screen is focused and the app active.
  */
 export function useAlbMetrics(projectId: string | undefined, proxyId: string | undefined, range: MetricRangeKey) {
-  const interval = useLiveRefetchInterval();
+  const { refetchInterval: interval, subscribed } = useLiveQuery();
   const durationMs = metricRangePreset(range).durationMs;
   const step = autoStepForRange(durationMs);
   const window = formatDurationFromMs(durationMs);
   const enabled = !!projectId && !!proxyId;
   const scope = { projectId: projectId ?? '', proxyId: proxyId ?? '' };
-  const common = { range, enabled, interval } as const;
+  const common = { range, enabled, interval, subscribed } as const;
 
   const rps = useMetricQuery({ ...common, kind: 'range', step, promql: albRpsQuery(scope, step) });
   const errorRate = useMetricQuery({ ...common, kind: 'range', step, promql: albErrorRateQuery(scope, step) });
@@ -264,12 +267,12 @@ export interface AlbKpis {
  * default range, so the two share a cache.
  */
 export function useAlbKpis(projectId: string | undefined, proxyId: string | undefined) {
-  const interval = useLiveRefetchInterval();
+  const { refetchInterval: interval, subscribed } = useLiveQuery();
   const durationMs = metricRangePreset(KPI_RANGE).durationMs;
   const step = autoStepForRange(durationMs);
   const window = formatDurationFromMs(durationMs);
   const scope = { projectId: projectId ?? '', proxyId: proxyId ?? '' };
-  const common = { range: KPI_RANGE, enabled: !!projectId && !!proxyId, interval } as const;
+  const common = { range: KPI_RANGE, enabled: !!projectId && !!proxyId, interval, subscribed } as const;
 
   const rps = useMetricQuery({ ...common, kind: 'range', step, promql: albRpsQuery(scope, step) });
   const errorRate = useMetricQuery({ ...common, kind: 'range', step, promql: albErrorRateQuery(scope, step) });
@@ -311,7 +314,7 @@ export const ACTIVE_REGION_WINDOW = '5m';
  * asks the label-values API for that, the app reads it off the 5m rate.
  */
 export function useAlbActiveRegions(projectId: string | undefined, proxyId: string | undefined) {
-  const interval = useLiveRefetchInterval();
+  const { refetchInterval: interval, subscribed } = useLiveQuery();
   const scope = { projectId: projectId ?? '', proxyId: proxyId ?? '' };
   const common = {
     kind: 'instant',
@@ -319,6 +322,7 @@ export function useAlbActiveRegions(projectId: string | undefined, proxyId: stri
     step: ACTIVE_REGION_WINDOW,
     enabled: !!projectId && !!proxyId,
     interval,
+    subscribed,
   } as const;
 
   const rps = useMetricQuery({ ...common, promql: albRegionalRpsQuery(scope, ACTIVE_REGION_WINDOW) });
@@ -366,10 +370,10 @@ export function useComputeMetrics(
   queries: { cpu: string | undefined; memory: string | undefined } | undefined,
   range: MetricRangeKey
 ) {
-  const interval = useLiveRefetchInterval();
+  const { refetchInterval: interval, subscribed } = useLiveQuery();
   const durationMs = metricRangePreset(range).durationMs;
   const step = computeChartStep(durationMs);
-  const common = { range, step, interval, kind: 'range', enabled: !!queries } as const;
+  const common = { range, step, interval, subscribed, kind: 'range', enabled: !!queries } as const;
   const cpu = useMetricQuery({ ...common, promql: queries?.cpu });
   const memory = useMetricQuery({ ...common, promql: queries?.memory });
   const status = statusOf([cpu, memory]);

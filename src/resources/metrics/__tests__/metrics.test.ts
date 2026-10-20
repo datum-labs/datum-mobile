@@ -21,7 +21,7 @@ const mockSession = jest.requireMock('@/auth/instance').session;
 const mockEnv = jest.requireMock('@/config/env').env;
 
 // The persisted cache (AsyncStorage) isn't needed to test the pure pieces.
-jest.mock('@/lib/query', () => ({ useLiveRefetchInterval: () => false }));
+jest.mock('@/lib/query', () => ({ useLiveQuery: () => ({ refetchInterval: false, subscribed: true }) }));
 
 const ok: PromResponse = { status: 'success', data: { resultType: 'vector', result: [] } };
 const fetchMock = jest.fn();

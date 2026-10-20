@@ -24,6 +24,8 @@ export interface ResourceRowProps {
   zoom?: boolean;
   /** Position in the list, for the staggered entering animation. */
   index?: number;
+  /** Called on press, before navigating to `href` (e.g. to record a recent). */
+  onSelect?: () => void;
   testID?: string;
 }
 
@@ -72,13 +74,26 @@ function RowPress({
   label,
   children,
   onPress,
+  onSelect,
   ...rest
-}: Omit<PressableProps, 'children'> & { label: string; children: ReactNode; ref?: Ref<View> }) {
+}: Omit<PressableProps, 'children'> & {
+  label: string;
+  children: ReactNode;
+  onSelect?: () => void;
+  ref?: Ref<View>;
+}) {
   const t = useDatumTheme();
   const grouped = useInRowGroup();
   if (!grouped) {
     return (
-      <PressableScale {...rest} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
+      <PressableScale
+        {...rest}
+        onPress={(e) => {
+          onSelect?.();
+          onPress?.(e);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={label}>
         {children}
       </PressableScale>
     );
@@ -90,6 +105,7 @@ function RowPress({
       accessibilityLabel={label}
       onPress={(e) => {
         impactHaptic('light');
+        onSelect?.();
         onPress?.(e);
       }}
       style={({ pressed }) => (pressed ? { backgroundColor: t.colors.muted } : null)}>
@@ -99,29 +115,40 @@ function RowPress({
 }
 
 /**
+ * Only the first rows stagger in: below them the list is off-screen or the
+ * motion goes unseen, and every animated row costs a frame of work.
+ */
+const ANIMATED_ROWS = 8;
+const ENTERING = Array.from({ length: ANIMATED_ROWS }, (_, i) =>
+  FadeInDown.delay(i * 35)
+    .duration(320)
+    .withInitialValues({ transform: [{ translateY: 10 }] })
+);
+const LAYOUT = LinearTransition.duration(220);
+// The zoom transition is iOS 18+ only; Android pushes with the standard Material motion.
+// (A constant: React Compiler can't compile an expression as a parameter default.)
+const ZOOM_BY_DEFAULT = Platform.OS === 'ios';
+
+/**
  * A list row: inside a RowGroup it's a table cell, otherwise its own card.
  * With `href` it pushes the detail screen using the iOS 18+ zoom transition
  * from this row (Link.AppleZoom).
  */
 export function ResourceRow(props: ResourceRowProps) {
-  // The zoom transition is iOS 18+ only; Android pushes with the standard Material motion.
-  const { href, index = 0, testID, zoom = Platform.OS === 'ios' } = props;
-  const entering = FadeInDown.delay(Math.min(index, 12) * 35)
-    .duration(320)
-    .withInitialValues({ transform: [{ translateY: 10 }] });
+  const { href, index = 0, testID, zoom = ZOOM_BY_DEFAULT } = props;
   return (
-    <Animated.View entering={entering} layout={LinearTransition.duration(220)} testID={testID}>
+    <Animated.View entering={index < ANIMATED_ROWS ? ENTERING[index] : undefined} layout={LAYOUT} testID={testID}>
       {href && zoom ? (
         <Link href={href} asChild>
           <Link.AppleZoom>
-            <RowPress label={props.title}>
+            <RowPress label={props.title} onSelect={props.onSelect}>
               <RowBody {...props} />
             </RowPress>
           </Link.AppleZoom>
         </Link>
       ) : href ? (
         <Link href={href} asChild>
-          <RowPress label={props.title}>
+          <RowPress label={props.title} onSelect={props.onSelect}>
             <RowBody {...props} />
           </RowPress>
         </Link>
