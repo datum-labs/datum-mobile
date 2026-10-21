@@ -1,5 +1,5 @@
 import { Text, useDatumTheme } from '@datum-cloud/datum-ui-native';
-import { Stack, useLocalSearchParams, type Href } from 'expo-router';
+import { Stack, useLocalSearchParams, useNavigation, type Href } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { SearchBarCommands } from 'react-native-screens';
@@ -21,6 +21,11 @@ import { SEARCH_GROUPS, searchResults, type SearchItem } from '@/resources/searc
 import { SEARCH_DEBOUNCE_MS, useDebouncedValue, useProjectSearch } from '@/resources/search/queries';
 import { useSearchRecents } from '@/resources/search/recents';
 
+/** The native stack's transition event, which useNavigation's type doesn't list. */
+interface TransitionEvents {
+  addListener(type: 'transitionEnd', listener: (e: { data: { closing: boolean } }) => void): () => void;
+}
+
 const ICON = Object.fromEntries(SEARCH_GROUPS.map((g) => [g.kind, g.icon])) as Record<
   SearchItem['kind'],
   (typeof SEARCH_GROUPS)[number]['icon']
@@ -40,6 +45,22 @@ export default function Search() {
   const { q: initial } = useLocalSearchParams<{ q?: string }>();
   const [query, setQuery] = useState(typeof initial === 'string' ? initial : '');
   const searchBar = useRef<SearchBarCommands>(null);
+  // Focus the field (keyboard up) once the push has landed: `autoFocus`
+  // alone fires before the header's search bar is ready on a push.
+  const navigation = useNavigation() as unknown as TransitionEvents;
+  useEffect(() => {
+    if (initial) return;
+    const focus = () => searchBar.current?.focus();
+    const unsubscribe = navigation.addListener('transitionEnd', (e) => {
+      if (!e.data.closing) focus();
+    });
+    // In case there's no transition (e.g. reduced motion, or opened by a link).
+    const fallback = setTimeout(focus, 600);
+    return () => {
+      unsubscribe();
+      clearTimeout(fallback);
+    };
+  }, [navigation, initial]);
   useEffect(() => {
     if (typeof initial !== 'string' || !initial) return;
     // The header's search bar mounts after this screen does.
