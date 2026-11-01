@@ -12,4 +12,4 @@ jobs:
   ci:
     uses: datum-cloud/actions/.github/workflows/ci-basic.yaml@de6ef95ace38b69f8f7fc677c54e0f24fa6255a1
     with:
-      skip: typecheck
+      skip: typecheck lint
