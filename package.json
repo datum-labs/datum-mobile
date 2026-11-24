@@ -2,6 +2,7 @@
   "name": "datum-mobile",
   "main": "expo-router/entry",
   "version": "0.1.0",
+  "packageManager": "pnpm@10.34.9",
   "dependencies": {
     "@datum-cloud/datum-ui-assistant-core": "link:../.worktrees/datum-ui-native/packages/assistant-core",
     "@datum-cloud/datum-ui-native": "link:../.worktrees/datum-ui-native/packages/native",
